@@ -30,15 +30,15 @@ namespace TextMining
                     content += titleNodes[i].InnerText.ToString();
                 for (int i = 0; i < textNodes.Count; i++)
                     content += textNodes[i].InnerText.ToString();
-                content += "#endfile# ";
+                content += " #endfile# ";
             }
             return content;
         }
 
         public string FilterByDelimiters(string content)
         {
-            string[] delimiters = new string[] { " ", ".", ",", ":", ";", "!", "?", "%", "&", "$", "@", "-", "+", "\'s",
-                            "\\", "/", "\'re", "\"", "(", ")", "<", ">", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+            string[] delimiters = new string[] { " ", ".", ",", ":", ";", "!", "?", "%", "&", "$", "@", "-", "+", "\'s", "\t",
+                            "\\", "/", "\'re", "\'d", "\"", "(", ")", "<", ">", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
             string[] parts = content.Split(delimiters, StringSplitOptions.None);
             string filteredContent = "";
             for (int i = 0; i < parts.Length; i++)
@@ -146,6 +146,16 @@ namespace TextMining
             
         }
 
+
+        
+
+
+
+
+
+
+
+
         public void PrintWordsDictionary()
         {
             foreach (KeyValuePair<string, int> pair in wordsDictionary)
@@ -160,12 +170,26 @@ namespace TextMining
 
         public void PrintListOfDictionaries()
         {
+            int fileNr = 1;
             foreach (var dictionary in listOfDictionaries)
             {
+                Console.WriteLine("- - - - - - - - - - - - {0} - - - - - - - - - - - -", fileNr++);
                 foreach (KeyValuePair<string, int> pair in dictionary)
                     Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
-                Console.WriteLine();
             }
+        }
+
+        public void PrintWordsDictionary_Length()
+        {
+            Console.WriteLine("Nr of unique words : {0}", wordsDictionary.Count());
+        }
+
+        public void PrintNrOfAllWordsFromList()
+        {
+            int wordsSum = 0;
+            foreach (var dictionary in listOfDictionaries)
+                wordsSum += dictionary.Count();
+            Console.WriteLine("Nr of all words from all dictionaries : {0}", wordsSum);
         }
 
     }
