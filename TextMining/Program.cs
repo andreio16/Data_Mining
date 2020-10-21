@@ -12,7 +12,7 @@ namespace TextMining
     {
         static void Main(string[] args)
         {
-            string sourceDirectory = @"C:\Users\Andrei\Desktop\ACS_1\TextMining\Labs1\Reuters_34";
+            string sourceDirectory = @"..\..\..\..\Reuters_34";
             TextMiningEngine engine = new TextMiningEngine();
             string contentFromFiles = engine.GetNodesValuesFromXML(sourceDirectory, "title", "text");
             contentFromFiles = engine.FilterByDelimiters(contentFromFiles);
@@ -20,17 +20,21 @@ namespace TextMining
             // Console.WriteLine(contentFromFiles);
             // Console.WriteLine(engine.GetLastKeysFromXmlFiles(contentFromFiles));
 
-            /*
+
+            
             engine.MakeDictionary(contentFromFiles);
-            engine.PrintWordsDictionary();
-
+            //engine.PrintWordsDictionary();
             engine.PrintWordsDictionary_Length();
-            */
-
-
+           
             engine.MakeListOfDictionaries(contentFromFiles);
-            engine.PrintListOfDictionaries();
+            //engine.PrintListOfDictionaries();
             engine.PrintNrOfAllWordsFromList();
+
+
+
+            engine.ApplyStowordsFiltering();
+
+
 
 
             //engine.ExtractCodeTopicsFromXML(sourceDirectory);

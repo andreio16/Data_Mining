@@ -12,6 +12,7 @@ namespace TextMining
     {
         private Dictionary<string, int> wordsDictionary = new Dictionary<string, int>();
         private Dictionary<int, string> topicsDictionary = new Dictionary<int, string>();
+        private List<string> stopwords = new List<string>();
         private List<Dictionary<string, int>> listOfDictionaries = new List<Dictionary<string, int>>();
 
 
@@ -146,7 +147,40 @@ namespace TextMining
             
         }
 
+        private void GetStopWordsFromTXT(string path)
+        {
+            StreamReader reader = new StreamReader(path);
+            string currentLine = reader.ReadLine();
+            while (currentLine != null)
+            {
+                stopwords.Add(currentLine);
+                currentLine = reader.ReadLine();
+            }
+        }
 
+        public void ApplyStowordsFiltering()
+        {
+            string stopwordsPath = @"..\..\..\..\stopwords.txt";
+            GetStopWordsFromTXT(stopwordsPath);
+
+            // Filtering words global dictionary (1)
+            foreach (KeyValuePair<string, int> pair in wordsDictionary.ToList())
+                foreach (string str in stopwords)
+                    if (pair.Key == str)
+                        wordsDictionary.Remove(pair.Key);
+            // Stopwords removed + print (1)
+            PrintWordsDictionary_Length();
+
+
+            // Clear checkers + Filtering the list of dictionaries (2)
+            foreach (var dictionary in listOfDictionaries)          
+                foreach (KeyValuePair<string, int> pair in dictionary.ToList())                
+                    foreach (string str in stopwords)
+                        if (pair.Key == str)
+                            dictionary.Remove(pair.Key);                             
+            // Stopwords removed + print (2)
+            PrintNrOfAllWordsFromList();
+        }
         
 
 
