@@ -14,6 +14,7 @@ namespace TextMining
         private Dictionary<int, string> topicsDictionary = new Dictionary<int, string>();
         private List<string> stopwords = new List<string>();
         private List<Dictionary<string, int>> listOfDictionaries = new List<Dictionary<string, int>>();
+        private PorterStemmer _porter = new PorterStemmer();
 
 
         public string GetNodesValuesFromXML(string path, string tag1, string tag2)
@@ -28,7 +29,7 @@ namespace TextMining
                 XmlNodeList textNodes = xmlDoc.GetElementsByTagName(tag2);
 
                 for (int i = 0; i < titleNodes.Count; i++)
-                    content += titleNodes[i].InnerText.ToString();
+                    content +=  titleNodes[i].InnerText.ToString();
                 for (int i = 0; i < textNodes.Count; i++)
                     content += textNodes[i].InnerText.ToString();
                 content += " #endfile# ";
@@ -43,7 +44,7 @@ namespace TextMining
             string[] parts = content.Split(delimiters, StringSplitOptions.None);
             string filteredContent = "";
             for (int i = 0; i < parts.Length; i++)
-                filteredContent += parts[i].ToLower() + " ";
+                filteredContent += _porter.StemWord(parts[i].ToLower()) + " ";
             return filteredContent;
         }
 

@@ -24,11 +24,9 @@ namespace TextMining
             
             engine.MakeDictionary(contentFromFiles);
             //engine.PrintWordsDictionary();
-            engine.PrintWordsDictionary_Length();
            
             engine.MakeListOfDictionaries(contentFromFiles);
             //engine.PrintListOfDictionaries();
-            engine.PrintNrOfAllWordsFromList();
 
 
 
