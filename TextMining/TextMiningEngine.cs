@@ -15,7 +15,8 @@ namespace TextMining
         private List<string> stopwords = new List<string>();
         private List<Dictionary<string, int>> listOfDictionaries = new List<Dictionary<string, int>>();
         private PorterStemmer _porter = new PorterStemmer();
-
+        private List<string> _sortedWordsDictionary = new List<string>();
+        private List<List<byte>> _VectorXMLs = new List<List<byte>>();
 
         public string GetNodesValuesFromXML(string path, string tag1, string tag2)
         {
@@ -39,8 +40,8 @@ namespace TextMining
 
         public string FilterByDelimiters(string content)
         {
-            string[] delimiters = new string[] { " ", ".", ",", ":", ";", "!", "?", "%", "&", "$", "@", "-", "+", "\'s", "\t",
-                            "\\", "/", "\'re", "\'d", "\"", "(", ")", "<", ">", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+            string[] delimiters = new string[] { " ", ".", ",", ":", ";", "!", "?", "%", "&", "$", "@", "-", "+", "/", "\t", "*", "'",
+                            "\\", "'s", "'re", "'d", "\"", "(", ")", "<", ">", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
             string[] parts = content.Split(delimiters, StringSplitOptions.None);
             string filteredContent = "";
             for (int i = 0; i < parts.Length; i++)
@@ -50,6 +51,7 @@ namespace TextMining
 
         public string GetLastKeysFromXmlFiles(string content)
         {
+            // Extra function
             string[] delimiters = new string[] { "#endfile#" };
             string[] parts = content.Split(delimiters, StringSplitOptions.None);
             string lastKey = " ";
@@ -183,6 +185,62 @@ namespace TextMining
             PrintNrOfAllWordsFromList();
         }
         
+        public void SortAndPrintWordsDictionary()
+        {
+            try
+            {
+                _sortedWordsDictionary = wordsDictionary.Keys.ToList();
+                _sortedWordsDictionary.Sort();
+                foreach(var key in _sortedWordsDictionary)
+                    Console.WriteLine("{0}: {1}", key, wordsDictionary[key]);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("\"wordsDictionary\" cannot be null!");
+            }
+        }
+
+
+
+        private List<byte> InitVector()
+        {
+            List<byte> list = new List<byte>();
+            int ct = 0;
+            while (ct < wordsDictionary.Count) 
+            {
+                list.Add(0);
+                ct++;
+            }
+            return list;
+        }
+
+        public void MakeVectors()
+        {
+            int i;
+            byte frequency = 0;
+            var vectorList = InitVector();
+
+            foreach (var dictionary in listOfDictionaries)
+            {
+                foreach (KeyValuePair<string, int> pair in dictionary)
+                {
+                    i = -1;
+                    foreach (var pairGlobal in _sortedWordsDictionary)
+                    {
+                        i++;
+                        if (pair.Key == pairGlobal)
+                        {
+                            frequency = (byte)pair.Value;
+                            break;
+                        }
+                    }
+                    if (i != -1) 
+                        vectorList[i] = frequency;
+                }
+                _VectorXMLs.Add(vectorList);
+                vectorList = InitVector();
+            }
+        }
 
 
 
@@ -190,6 +248,7 @@ namespace TextMining
 
 
 
+        // ~~~ All Print Functions !!! ~~~  //
 
         public void PrintWordsDictionary()
         {

@@ -12,13 +12,11 @@ namespace TextMining
     {
         static void Main(string[] args)
         {
-            string sourceDirectory = @"..\..\..\..\Reuters_34";
+            string sourceDirectory = @"..\..\..\..\Reuters_34Mini";
             TextMiningEngine engine = new TextMiningEngine();
             string contentFromFiles = engine.GetNodesValuesFromXML(sourceDirectory, "title", "text");
             contentFromFiles = engine.FilterByDelimiters(contentFromFiles);
 
-            // Console.WriteLine(contentFromFiles);
-            // Console.WriteLine(engine.GetLastKeysFromXmlFiles(contentFromFiles));
 
 
             
@@ -27,13 +25,13 @@ namespace TextMining
            
             engine.MakeListOfDictionaries(contentFromFiles);
             //engine.PrintListOfDictionaries();
-
-
-
+            
             engine.ApplyStowordsFiltering();
 
+            engine.SortAndPrintWordsDictionary();
 
-
+            engine.MakeVectors();
+            
 
             //engine.ExtractCodeTopicsFromXML(sourceDirectory);
             //engine.PrintTopicsDictionary();
