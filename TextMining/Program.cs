@@ -18,8 +18,8 @@ namespace TextMining
             contentFromFiles = engine.FilterByDelimiters(contentFromFiles);
 
 
-
-            
+            /*
+             
             engine.MakeDictionary(contentFromFiles);
             //engine.PrintWordsDictionary();
            
@@ -31,10 +31,15 @@ namespace TextMining
             engine.SortAndPrintWordsDictionary();
 
             engine.MakeVectors();
+            //engine.PrintVectors();
             
+            */
 
-            //engine.ExtractCodeTopicsFromXML(sourceDirectory);
-            //engine.PrintTopicsDictionary();
+
+
+            engine.ExtractCodeTopicsFromXML(sourceDirectory);
+            engine.FeatureSelectionStep();
+            engine.PrintTopicsDictionary();
         }
     }
 }

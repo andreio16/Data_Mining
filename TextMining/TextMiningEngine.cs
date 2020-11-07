@@ -244,7 +244,62 @@ namespace TextMining
 
 
 
+        private Dictionary<string, int> ProcessingTopicsDictionary()
+        {
+            var firstTopicDictionary = new Dictionary<string, int>();
+            var topics = new List<string>();
+            var keys = new List<string>();
+            var values = new List<int>();
 
+            if (topicsDictionary.Count >= 1)
+            {
+                foreach (KeyValuePair<int, string> pair in topicsDictionary)
+                {
+                    string[] classes = pair.Value.Split(' ');
+                    topics.Add(classes[0]);           
+                }
+
+                keys = topics.Distinct().ToList();
+
+                foreach (var group in topics.GroupBy(s => s))
+                    values.Add(group.Count());
+
+                for (int i = 0; i < keys.Count; i++)
+                    firstTopicDictionary.Add(keys[i], values[i]);
+                
+
+                return firstTopicDictionary;
+            }
+            else
+            {
+                return new Dictionary<string, int>();
+            }
+        }
+
+        private double CalculateEntropy(Dictionary<string, int> dataSet)
+        {
+            double entropy = 0.00f;
+            int totalClasses = 0;
+
+            foreach (KeyValuePair<string, int> pair in dataSet)
+                totalClasses += pair.Value;
+
+            foreach (KeyValuePair<string, int> pair in dataSet)
+                entropy -= ((double)pair.Value / totalClasses) * Math.Log((double)pair.Value / totalClasses, 2);
+
+            return Math.Round(entropy, 2);
+        }
+
+        public void FeatureSelectionStep()
+        {
+            var xmlClasses = ProcessingTopicsDictionary();
+
+            //  Entropy DONE
+            Console.WriteLine(CalculateEntropy(xmlClasses));
+            foreach (KeyValuePair<string, int> pair in xmlClasses)
+                Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
+
+        }
 
 
 
@@ -286,5 +341,14 @@ namespace TextMining
             Console.WriteLine("Nr of all words from all dictionaries : {0}", wordsSum);
         }
 
+        public void PrintVectors()
+        {
+            foreach(var list in _VectorXMLs)
+            {
+                foreach (var item in list)
+                    Console.Write("{0} ", item);
+                Console.WriteLine();
+            }
+        }
     }
 }
