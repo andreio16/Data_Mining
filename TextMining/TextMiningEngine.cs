@@ -244,9 +244,17 @@ namespace TextMining
 
 
 
+
+
+
+
+
         private Dictionary<string, int> ProcessingTopicsDictionary()
         {
             var firstTopicDictionary = new Dictionary<string, int>();
+            var wrongTopics = new List<string>();
+            var allTopics = new List<string>();
+
             var topics = new List<string>();
             var keys = new List<string>();
             var values = new List<int>();
@@ -256,10 +264,17 @@ namespace TextMining
                 foreach (KeyValuePair<int, string> pair in topicsDictionary)
                 {
                     string[] classes = pair.Value.Split(' ');
-                    topics.Add(classes[0]);           
+                    topics.Add(classes[0]);
+
+                    foreach (var target in classes)
+                        if(target != "")
+                            allTopics.Add(target);
                 }
 
-                keys = topics.Distinct().ToList();
+                wrongTopics = GetTopicsWithWrongProbability(allTopics);
+                keys = topics.Distinct().Except(wrongTopics).ToList();
+
+                //keys = topics.Distinct().ToList();
 
                 foreach (var group in topics.GroupBy(s => s))
                     values.Add(group.Count());
@@ -267,13 +282,29 @@ namespace TextMining
                 for (int i = 0; i < keys.Count; i++)
                     firstTopicDictionary.Add(keys[i], values[i]);
                 
-
                 return firstTopicDictionary;
             }
             else
             {
                 return new Dictionary<string, int>();
             }
+        }
+
+        private List<string> GetTopicsWithWrongProbability(List<string> topics)
+        {
+            var topicsWithWrongProbability = new List<string>();
+            float probability = 0.00f;
+            float counter = 0.00f;
+
+            foreach (var group in topics.GroupBy(s => s))
+            {
+                counter = group.Count();
+                probability = counter / topics.Count;
+                if (probability < 0.05 || probability > 0.95)
+                    topicsWithWrongProbability.Add(group.Key);
+            }
+
+            return topicsWithWrongProbability;
         }
 
         private double CalculateEntropy(Dictionary<string, int> dataSet)

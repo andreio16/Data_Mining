@@ -12,7 +12,7 @@ namespace TextMining
     {
         static void Main(string[] args)
         {
-            string sourceDirectory = @"..\..\..\..\Reuters_34Mini";
+            string sourceDirectory = @"..\..\..\..\Reuters_34";
             TextMiningEngine engine = new TextMiningEngine();
             string contentFromFiles = engine.GetNodesValuesFromXML(sourceDirectory, "title", "text");
             contentFromFiles = engine.FilterByDelimiters(contentFromFiles);
