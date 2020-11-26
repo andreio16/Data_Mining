@@ -272,6 +272,21 @@ namespace TextMining
                 }
 
                 wrongTopics = GetTopicsWithWrongProbability(allTopics);
+
+                var temp = new Dictionary<int, string>();
+                foreach (KeyValuePair<int, string> pair in topicsDictionary)
+                {
+                    string value = pair.Value;
+                    foreach(var word in wrongTopics)
+                    {
+                        value = value.Replace(word, "");
+                    }
+                    if (value.Length > 0)
+                        temp.Add(pair.Key, value);
+                }
+                topicsDictionary.Clear();
+                topicsDictionary = temp;
+
                 keys = topics.Distinct().Except(wrongTopics).ToList();
 
                 //keys = topics.Distinct().ToList();
@@ -299,8 +314,8 @@ namespace TextMining
             foreach (var group in topics.GroupBy(s => s))
             {
                 counter = group.Count();
-                probability = counter / topics.Count;
-                if (probability < 0.05 || probability > 0.95)
+                probability = counter / topicsDictionary.Count;
+                if (probability < 0.05 || probability > 0.95)  
                     topicsWithWrongProbability.Add(group.Key);
             }
 
