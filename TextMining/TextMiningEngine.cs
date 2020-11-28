@@ -128,7 +128,7 @@ namespace TextMining
 
         public void ExtractCodeTopicsFromXML(string path)
         {
-            int keyPerFile = 1;
+            int keyPerFile = 0;
             foreach (string file in Directory.EnumerateFiles(path, "*.xml"))
             {
                 string codePerFile = "";
@@ -323,6 +323,20 @@ namespace TextMining
             return topicsWithWrongProbability;
         }
 
+        private List<int> GetNullStringIndexesFromTopicsDictionary()
+        {
+            var indexes = new List<int>();
+            foreach (KeyValuePair<int, string> pair in topicsDictionary.ToList())
+            {
+                if (string.IsNullOrWhiteSpace(pair.Value))
+                {
+                    indexes.Add(pair.Key);
+                    topicsDictionary.Remove(pair.Key);
+                }
+            }
+            return indexes;
+        }
+
         private void RemakeTopicsDictionaryAccordingToWrongTopics(List<string> wrongTopics)
         {
             var temp = new Dictionary<int, string>();
@@ -354,6 +368,23 @@ namespace TextMining
             return Math.Round(entropy, 2);
         }
 
+        private void AdjustVectorsAndTopicsDictionary()
+        {
+            var forbiddenIndexes = GetNullStringIndexesFromTopicsDictionary();
+           
+            for (int i = 0; i < VectorXMLs.Count(); i++) 
+            {
+                for (int j = 0; j < forbiddenIndexes.Count(); j++) 
+                    if (i == forbiddenIndexes[j])
+                    {
+                        VectorXMLs.RemoveAt(i);
+                        if (j + 1 < forbiddenIndexes.Count() && forbiddenIndexes[j + 1] != 0) 
+                            forbiddenIndexes[j + 1]--;
+                    }
+            }
+        }
+
+
         public void FeatureSelectionStep()
         {
             var xmlClasses = ProcessingTopicsDictionary();
@@ -362,7 +393,8 @@ namespace TextMining
             Console.WriteLine(CalculateEntropy(xmlClasses));
             foreach (KeyValuePair<string, int> pair in xmlClasses)
                 Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
-
+            
+            AdjustVectorsAndTopicsDictionary();
         }
 
 
