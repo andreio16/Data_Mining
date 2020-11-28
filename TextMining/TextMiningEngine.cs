@@ -252,44 +252,23 @@ namespace TextMining
         private Dictionary<string, int> ProcessingTopicsDictionary()
         {
             var firstTopicDictionary = new Dictionary<string, int>();
-            var wrongTopics = new List<string>();
-            var allTopics = new List<string>();
-
-            var topics = new List<string>();
+            
             var keys = new List<string>();
             var values = new List<int>();
 
             if (topicsDictionary.Count >= 1)
             {
-                foreach (KeyValuePair<int, string> pair in topicsDictionary)
-                {
-                    string[] classes = pair.Value.Split(' ');
-                    topics.Add(classes[0]);
+                var topics = GetFirstColumnFromTopicsDictionary();
+                var allTopics = GetAllTopicsFromTopicsDictionary();
 
-                    foreach (var target in classes)
-                        if(target != "")
-                            allTopics.Add(target);
-                }
+                var wrongTopics = GetTopicsWithWrongProbability(allTopics);
 
-                wrongTopics = GetTopicsWithWrongProbability(allTopics);
+                //------
+                RemakeTopicsDictionaryAccordingToWrongTopics(wrongTopics);
+                //------
 
-                var temp = new Dictionary<int, string>();
-                foreach (KeyValuePair<int, string> pair in topicsDictionary)
-                {
-                    string value = pair.Value;
-                    foreach(var word in wrongTopics)
-                    {
-                        value = value.Replace(word, "");
-                    }
-                    if (value.Length > 0)
-                        temp.Add(pair.Key, value);
-                }
-                topicsDictionary.Clear();
-                topicsDictionary = temp;
-
-                keys = topics.Distinct().Except(wrongTopics).ToList();
-
-                //keys = topics.Distinct().ToList();
+                //keys = topics.Distinct().Except(wrongTopics).ToList();
+                keys = topics.Distinct().ToList();
 
                 foreach (var group in topics.GroupBy(s => s))
                     values.Add(group.Count());
@@ -303,6 +282,31 @@ namespace TextMining
             {
                 return new Dictionary<string, int>();
             }
+        }
+
+        private List<string> GetFirstColumnFromTopicsDictionary()
+        {
+            var topics = new List<string>();
+            foreach (KeyValuePair<int, string> pair in topicsDictionary)
+            {
+                string[] classes = pair.Value.Split(' ');
+                topics.Add(classes[0]);
+            }
+            return topics;
+        }
+        
+        private List<string> GetAllTopicsFromTopicsDictionary()
+        {
+            var allTopics = new List<string>();
+            foreach (KeyValuePair<int, string> pair in topicsDictionary)
+            {
+                string[] classes = pair.Value.Split(' ');
+
+                foreach (var target in classes)
+                    if (target != "")
+                        allTopics.Add(target);
+            }
+            return allTopics;
         }
 
         private List<string> GetTopicsWithWrongProbability(List<string> topics)
@@ -320,6 +324,23 @@ namespace TextMining
             }
 
             return topicsWithWrongProbability;
+        }
+
+        private void RemakeTopicsDictionaryAccordingToWrongTopics(List<string> wrongTopics)
+        {
+            var temp = new Dictionary<int, string>();
+            foreach (KeyValuePair<int, string> pair in topicsDictionary)
+            {
+                string value = pair.Value;
+                foreach (var word in wrongTopics)
+                {
+                    value = value.Replace(word, "");
+                }
+                if (value.Length > 0)
+                    temp.Add(pair.Key, value);
+            }
+            topicsDictionary.Clear();
+            topicsDictionary = temp;
         }
 
         private double CalculateEntropy(Dictionary<string, int> dataSet)
