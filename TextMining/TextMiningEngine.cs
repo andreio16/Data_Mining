@@ -15,8 +15,8 @@ namespace TextMining
         private List<string> stopwords = new List<string>();
         private List<Dictionary<string, int>> listOfDictionaries = new List<Dictionary<string, int>>();
         private PorterStemmer _porter = new PorterStemmer();
-        private List<string> _sortedWordsDictionary = new List<string>();
-        private List<List<byte>> _VectorXMLs = new List<List<byte>>();
+        private List<string> sortedWordsDictionary = new List<string>();
+        private List<List<byte>> VectorXMLs = new List<List<byte>>();
 
         public string GetNodesValuesFromXML(string path, string tag1, string tag2)
         {
@@ -189,9 +189,9 @@ namespace TextMining
         {
             try
             {
-                _sortedWordsDictionary = wordsDictionary.Keys.ToList();
-                _sortedWordsDictionary.Sort();
-                foreach(var key in _sortedWordsDictionary)
+                sortedWordsDictionary = wordsDictionary.Keys.ToList();
+                sortedWordsDictionary.Sort();
+                foreach(var key in sortedWordsDictionary)
                     Console.WriteLine("{0}: {1}", key, wordsDictionary[key]);
             }
             catch (Exception)
@@ -225,7 +225,7 @@ namespace TextMining
                 foreach (KeyValuePair<string, int> pair in dictionary)
                 {
                     i = -1;
-                    foreach (var pairGlobal in _sortedWordsDictionary)
+                    foreach (var pairGlobal in sortedWordsDictionary)
                     {
                         i++;
                         if (pair.Key == pairGlobal)
@@ -237,7 +237,7 @@ namespace TextMining
                     if (i != -1) 
                         vectorList[i] = frequency;
                 }
-                _VectorXMLs.Add(vectorList);
+                VectorXMLs.Add(vectorList);
                 vectorList = InitVector();
             }
         }
@@ -260,14 +260,10 @@ namespace TextMining
             {
                 var topics = GetFirstColumnFromTopicsDictionary();
                 var allTopics = GetAllTopicsFromTopicsDictionary();
-
                 var wrongTopics = GetTopicsWithWrongProbability(allTopics);
-
-                //------
+                
                 RemakeTopicsDictionaryAccordingToWrongTopics(wrongTopics);
-                //------
-
-                //keys = topics.Distinct().Except(wrongTopics).ToList();
+                topics = GetFirstColumnFromTopicsDictionary();
                 keys = topics.Distinct().ToList();
 
                 foreach (var group in topics.GroupBy(s => s))
@@ -290,7 +286,8 @@ namespace TextMining
             foreach (KeyValuePair<int, string> pair in topicsDictionary)
             {
                 string[] classes = pair.Value.Split(' ');
-                topics.Add(classes[0]);
+                if (classes[0] != "") 
+                    topics.Add(classes[0]);
             }
             return topics;
         }
@@ -410,7 +407,7 @@ namespace TextMining
 
         public void PrintVectors()
         {
-            foreach(var list in _VectorXMLs)
+            foreach(var list in VectorXMLs)
             {
                 foreach (var item in list)
                     Console.Write("{0} ", item);

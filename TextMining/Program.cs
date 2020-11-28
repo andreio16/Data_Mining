@@ -17,9 +17,15 @@ namespace TextMining
             string contentFromFiles = engine.GetNodesValuesFromXML(sourceDirectory, "title", "text");
             contentFromFiles = engine.FilterByDelimiters(contentFromFiles);
 
+            //  --------- Target classes PROCESSED --------- //
+            engine.ExtractCodeTopicsFromXML(sourceDirectory);
+            engine.FeatureSelectionStep();
+            //engine.PrintTopicsDictionary();
+            //          --------- < DONE > ---------         //
 
-            /*
-             
+
+
+
             engine.MakeDictionary(contentFromFiles);
             //engine.PrintWordsDictionary();
            
@@ -31,15 +37,9 @@ namespace TextMining
             engine.SortAndPrintWordsDictionary();
 
             engine.MakeVectors();
-            //engine.PrintVectors();
+            engine.PrintVectors();
             
-            */
-
-
-
-            engine.ExtractCodeTopicsFromXML(sourceDirectory);
-            engine.FeatureSelectionStep();
-            engine.PrintTopicsDictionary();
+            
         }
     }
 }
