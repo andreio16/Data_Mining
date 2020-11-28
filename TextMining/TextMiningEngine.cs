@@ -384,6 +384,14 @@ namespace TextMining
             }
         }
 
+        private void ComputeInfoGain()
+        {
+            foreach (var list in VectorXMLs)
+            {
+               Console.WriteLine(list.ElementAt(0));
+            }
+
+        }
 
         public void FeatureSelectionStep()
         {
@@ -395,6 +403,9 @@ namespace TextMining
                 Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
             
             AdjustVectorsAndTopicsDictionary();
+
+            Console.WriteLine("@@@@");
+            ComputeInfoGain();
         }
 
 
