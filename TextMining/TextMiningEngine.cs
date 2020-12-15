@@ -386,22 +386,44 @@ namespace TextMining
 
         private void ComputeInfoGain()
         {
-            foreach (var list in VectorXMLs)
+            // Extract Target Classes
+            var targetClasses = GetFirstColumnFromTopicsDictionary();
+
+            // Extract Column Atribut Values 
+            for (int i = 0; i < VectorXMLs[0].Count; i++) 
             {
-               Console.WriteLine(list.ElementAt(0));
+                foreach (var list in VectorXMLs)
+                {
+                    Console.WriteLine(list.ElementAt(i));
+                }
+                Console.WriteLine("**********{0}***********", i);
+                //-----------------
+
+                //-----------------
             }
 
+        }
+
+        private List<byte> TraverseColumnX(int x)
+        {
+            var temp = new List<byte>();
+            foreach (var list in VectorXMLs)
+                temp.Add(list.ElementAt(x));
+            return temp;
         }
 
         public void FeatureSelectionStep()
         {
             var xmlClasses = ProcessingTopicsDictionary();
+            var globalEntropy = CalculateEntropy(xmlClasses);
 
             //  Entropy DONE
-            Console.WriteLine(CalculateEntropy(xmlClasses));
-            foreach (KeyValuePair<string, int> pair in xmlClasses)
-                Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
-            
+            Console.WriteLine(globalEntropy);
+            //foreach (KeyValuePair<string, int> pair in xmlClasses)
+            //    Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
+            //  Entropy DONE
+
+
             AdjustVectorsAndTopicsDictionary();
 
             Console.WriteLine("@@@@");

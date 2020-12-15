@@ -29,14 +29,14 @@ namespace TextMining
              engine.SortAndPrintWordsDictionary();
 
              engine.MakeVectors();
-             engine.PrintVectors();
+             //engine.PrintVectors();
              
 
 
             //  --------- Target classes PROCESSED --------- //
             engine.ExtractCodeTopicsFromXML(sourceDirectory);
             engine.FeatureSelectionStep();
-            engine.PrintTopicsDictionary();
+            //engine.PrintTopicsDictionary();
 
             engine.PrintVectors();
             //          --------- < DONE > ---------         //
