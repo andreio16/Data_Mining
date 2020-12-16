@@ -412,13 +412,9 @@ namespace TextMining
                         {
                             sum++;
                             if (dictValueTarget.ContainsKey(targetClasses[j]))
-                            {
                                 dictValueTarget[targetClasses[j]]++;
-                            }
                             else
-                            {
                                 dictValueTarget.Add(targetClasses[j], 1);
-                            }
                         }
                     }
                     partialGain -= ((double)sum / columnAttr.Count) * CalculateEntropy(dictValueTarget);
@@ -457,6 +453,7 @@ namespace TextMining
 
             Console.WriteLine("@@@@");
             var list = ComputeInfoGain(globalEntropy);
+            // preluat 10% din atribute -> next step generare fisier
         }
 
 
