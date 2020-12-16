@@ -384,20 +384,53 @@ namespace TextMining
             }
         }
 
-        private void ComputeInfoGain()
+        private List<double> ComputeInfoGain(double globalEntropy)
         {
+            var distinctAttrValue = new List<byte>();
+            var dictValueTarget = new Dictionary<string, int>();
+            var gainRatio = new List<double>();
+
             // Extract Target Classes
             var targetClasses = GetFirstColumnFromTopicsDictionary();
 
             // Extract Column Atribut Values 
             for (int i = 0; i < VectorXMLs[0].Count; i++) 
             {
-                var columnAtr = GetColumnFromVectorXML(i);
+                var columnAttr = GetColumnFromVectorXML(i);
+                double partialGain = globalEntropy;
+                double split = 0;
+                int sum = 0;
                 //-----------------
-                
+                distinctAttrValue = columnAttr.Distinct().ToList();
+                foreach(var distElem in distinctAttrValue)
+                {
+                    dictValueTarget.Clear();
+                    sum = 0;
+                    for (int j = 0; j < columnAttr.Count; j++) 
+                    {
+                        if(distElem == columnAttr[j])
+                        {
+                            sum++;
+                            if (dictValueTarget.ContainsKey(targetClasses[j]))
+                            {
+                                dictValueTarget[targetClasses[j]]++;
+                            }
+                            else
+                            {
+                                dictValueTarget.Add(targetClasses[j], 1);
+                            }
+                        }
+                    }
+                    partialGain -= ((double)sum / columnAttr.Count) * CalculateEntropy(dictValueTarget);
+                    split -= ((double)sum/ columnAttr.Count) * Math.Log(((double)sum / columnAttr.Count), 2);
+                }
+                if (split != 0)
+                    gainRatio.Add(partialGain / split);
+                else
+                    gainRatio.Add(partialGain);
                 //-----------------
             }
-
+            return gainRatio;
         }
 
         private List<byte> GetColumnFromVectorXML(int x)
@@ -423,7 +456,7 @@ namespace TextMining
             AdjustVectorsAndTopicsDictionary();
 
             Console.WriteLine("@@@@");
-            ComputeInfoGain();
+            var list = ComputeInfoGain(globalEntropy);
         }
 
 
