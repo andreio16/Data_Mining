@@ -392,19 +392,15 @@ namespace TextMining
             // Extract Column Atribut Values 
             for (int i = 0; i < VectorXMLs[0].Count; i++) 
             {
-                foreach (var list in VectorXMLs)
-                {
-                    Console.WriteLine(list.ElementAt(i));
-                }
-                Console.WriteLine("**********{0}***********", i);
+                var columnAtr = GetColumnFromVectorXML(i);
                 //-----------------
-
+                
                 //-----------------
             }
 
         }
 
-        private List<byte> TraverseColumnX(int x)
+        private List<byte> GetColumnFromVectorXML(int x)
         {
             var temp = new List<byte>();
             foreach (var list in VectorXMLs)
