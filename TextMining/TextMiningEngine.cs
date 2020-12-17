@@ -8,6 +8,20 @@ using System.Xml;
 
 namespace TextMining
 {
+    class arff
+    {
+        public double gainRatioValue;
+        string attribute;
+        int index;
+
+        public arff(string attribute, int index, double gainRatioValue)
+        {
+            this.gainRatioValue = gainRatioValue;
+            this.attribute = attribute;
+            this.index = index;
+        }
+    }
+
     class TextMiningEngine
     {
         private Dictionary<string, int> wordsDictionary = new Dictionary<string, int>();
@@ -195,7 +209,6 @@ namespace TextMining
                     Console.WriteLine("{0}: {1}", key, wordsDictionary[key]);
 
                 var temp = new Dictionary<string, int>();
-                string theKey = "";
                 for (int i = 0; i < sortedWordsDictionary.Count; i++)
                     temp.Add(sortedWordsDictionary[i], wordsDictionary[sortedWordsDictionary[i]]);
                 wordsDictionary = temp;
@@ -430,22 +443,23 @@ namespace TextMining
             return gainRatio;
         }
 
-        private Dictionary<int, double> GetRelevantAttrFromGainRatio(List<double> gainRatioList, int percentage)
+        private List<arff> GetRelevantAttrFromGainRatio(List<double> gainRatioList, int percentage)
         {
             var relevantAttributes = new Dictionary<int, double>();
             int numberOfRelevants = (gainRatioList.Count * percentage) / 100;
-
-
-            // Buid dictionary 
-            var gainRatioDictionary = new Dictionary<int, double>();
-            for (int i = 0; i < gainRatioList.Count; i++)
-                gainRatioDictionary.Add(i, gainRatioList[i]);
             
-            // Sort GainRatio list
-           // gainRatioList = gainRatioList.OrderByDescending(i => i).ToList();
-           
+            var gainRatioObjList = new List<arff>();
+            for (int i = 0; i < gainRatioList.Count; i++)
+                gainRatioObjList.Add(new arff(sortedWordsDictionary[i], i, gainRatioList[i]));
 
-            return relevantAttributes;
+            var temp1 = gainRatioObjList.OrderByDescending(x => x.gainRatioValue).ToList();
+            var temp2 = new List<arff>();
+            for (int i = 0; i < numberOfRelevants; i++)
+                temp2.Add(temp1[i]);
+
+            gainRatioObjList = temp2;
+
+            return gainRatioObjList;
         }
 
         private List<byte> GetColumnFromVectorXML(int x)
@@ -467,19 +481,16 @@ namespace TextMining
             //    Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
             //  Entropy DONE
 
-
             AdjustVectorsAndTopicsDictionary();
             
             var GainRatioList = ComputeInfoGain(globalEntropy);
-            var list = GetRelevantAttrFromGainRatio(GainRatioList, 10);
+            var arffAttributes = GetRelevantAttrFromGainRatio(GainRatioList, 10);
+            GainRatioList.Clear();
             // preluat 10% din atribute -> next step generare fisier
         }
 
 
-
-
-
-
+        
 
         // ~~~ All Print Functions !!! ~~~  //
 
