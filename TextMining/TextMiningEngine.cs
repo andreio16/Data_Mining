@@ -193,6 +193,12 @@ namespace TextMining
                 sortedWordsDictionary.Sort();
                 foreach(var key in sortedWordsDictionary)
                     Console.WriteLine("{0}: {1}", key, wordsDictionary[key]);
+
+                var temp = new Dictionary<string, int>();
+                string theKey = "";
+                for (int i = 0; i < sortedWordsDictionary.Count; i++)
+                    temp.Add(sortedWordsDictionary[i], wordsDictionary[sortedWordsDictionary[i]]);
+                wordsDictionary = temp;
             }
             catch (Exception)
             {
@@ -242,13 +248,8 @@ namespace TextMining
             }
         }
 
-
-
-
-
-
-
-
+        
+        
         private Dictionary<string, int> ProcessingTopicsDictionary()
         {
             var firstTopicDictionary = new Dictionary<string, int>();
@@ -429,6 +430,24 @@ namespace TextMining
             return gainRatio;
         }
 
+        private Dictionary<int, double> GetRelevantAttrFromGainRatio(List<double> gainRatioList, int percentage)
+        {
+            var relevantAttributes = new Dictionary<int, double>();
+            int numberOfRelevants = (gainRatioList.Count * percentage) / 100;
+
+
+            // Buid dictionary 
+            var gainRatioDictionary = new Dictionary<int, double>();
+            for (int i = 0; i < gainRatioList.Count; i++)
+                gainRatioDictionary.Add(i, gainRatioList[i]);
+            
+            // Sort GainRatio list
+           // gainRatioList = gainRatioList.OrderByDescending(i => i).ToList();
+           
+
+            return relevantAttributes;
+        }
+
         private List<byte> GetColumnFromVectorXML(int x)
         {
             var temp = new List<byte>();
@@ -450,11 +469,15 @@ namespace TextMining
 
 
             AdjustVectorsAndTopicsDictionary();
-
-            Console.WriteLine("@@@@");
-            var list = ComputeInfoGain(globalEntropy);
+            
+            var GainRatioList = ComputeInfoGain(globalEntropy);
+            var list = GetRelevantAttrFromGainRatio(GainRatioList, 10);
             // preluat 10% din atribute -> next step generare fisier
         }
+
+
+
+
 
 
 

@@ -37,10 +37,8 @@ namespace TextMining
             engine.ExtractCodeTopicsFromXML(sourceDirectory);
             engine.FeatureSelectionStep();
             //engine.PrintTopicsDictionary();
-
-            engine.PrintVectors();
             //          --------- < DONE > ---------         //
-
+            
         }
     }
 }
