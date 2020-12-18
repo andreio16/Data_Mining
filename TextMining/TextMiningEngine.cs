@@ -11,8 +11,8 @@ namespace TextMining
     class arff
     {
         public double gainRatioValue;
-        string attribute;
-        int index;
+        public string attribute;
+        public int index;
 
         public arff(string attribute, int index, double gainRatioValue)
         {
@@ -472,21 +472,67 @@ namespace TextMining
 
         public void FeatureSelectionStep()
         {
+            //  Process only the first topic from the sample
             var xmlClasses = ProcessingTopicsDictionary();
             var globalEntropy = CalculateEntropy(xmlClasses);
 
-            //  Entropy DONE
-            Console.WriteLine(globalEntropy);
-            //foreach (KeyValuePair<string, int> pair in xmlClasses)
-            //    Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
-            //  Entropy DONE
 
+            //  Entropy DONE
+            Console.WriteLine("Calculated Entropy for attribute set : {0}", globalEntropy);
+            foreach (KeyValuePair<string, int> pair in xmlClasses)
+                Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
+
+
+            //  Needed because of first topic filtering
             AdjustVectorsAndTopicsDictionary();
             
+
+            //  Compute GainRatio -> took only 10% most relevant attributes
             var GainRatioList = ComputeInfoGain(globalEntropy);
             var arffAttributes = GetRelevantAttrFromGainRatio(GainRatioList, 10);
             GainRatioList.Clear();
-            // preluat 10% din atribute -> next step generare fisier
+
+
+            //  Generate .arff export file// Extract Target Classes
+            var targetClasses = GetFirstColumnFromTopicsDictionary();
+            string workingDirectory = Environment.CurrentDirectory;
+            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export.arff";
+            int lineCt = 0;
+
+            if (File.Exists(projectDirectory))
+                File.Delete(projectDirectory);
+
+            foreach (var list in VectorXMLs)
+            {
+                string vectLine = "";
+                foreach (var itemAttr in arffAttributes)
+                {
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        if (i == itemAttr.index)
+                        {
+                            vectLine += itemAttr.index.ToString() + ":" + list[i].ToString() + ",";
+                        }
+                    }
+                }
+                using (FileStream fs = new FileStream(projectDirectory,FileMode.Append))
+                {
+                    // vectLine.LastIndexOf(",")
+
+                    var stringBuilder = new StringBuilder(vectLine);
+                    stringBuilder.Remove(vectLine.LastIndexOf(","), 1);
+                    stringBuilder.Insert(vectLine.LastIndexOf(","), " # ");
+                    vectLine = stringBuilder.ToString() + targetClasses[lineCt];
+
+
+                    StreamWriter sw = new StreamWriter(fs);
+                    sw.WriteLine(vectLine);
+                    sw.Flush();
+
+                    if (lineCt < targetClasses.Count)
+                        lineCt++;
+                }
+            }
         }
 
 
