@@ -502,7 +502,24 @@ namespace TextMining
             if (File.Exists(projectDirectory))
                 File.Delete(projectDirectory);
 
-            foreach (var list in VectorXMLs)
+            using (FileStream fs = new FileStream(projectDirectory, FileMode.Append))
+            {
+                StreamWriter sw = new StreamWriter(fs);
+                string allClasses = "";
+
+                foreach (var itemAttr in arffAttributes)
+                    sw.WriteLine("@attribute " + itemAttr.attribute);
+
+                foreach (var targetClass in targetClasses)
+                    allClasses += targetClass + ",";
+
+                sw.WriteLine("@classes {" + allClasses + "}");
+                sw.WriteLine();
+                sw.WriteLine("@data");
+                sw.Flush();
+            }
+
+            foreach (var list in VectorXMLs) 
             {
                 string vectLine = "";
                 foreach (var itemAttr in arffAttributes)
@@ -515,14 +532,11 @@ namespace TextMining
                 }
                 using (FileStream fs = new FileStream(projectDirectory,FileMode.Append))
                 {
-                    // vectLine.LastIndexOf(",")
-
                     var stringBuilder = new StringBuilder(vectLine);
                     stringBuilder.Remove(vectLine.LastIndexOf(","), 1);
                     stringBuilder.Insert(vectLine.LastIndexOf(","), " # ");
                     vectLine = stringBuilder.ToString() + targetClasses[lineCt];
-
-
+                    
                     StreamWriter sw = new StreamWriter(fs);
                     sw.WriteLine(vectLine);
                     sw.Flush();
