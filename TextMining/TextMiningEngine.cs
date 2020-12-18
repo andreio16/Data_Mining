@@ -459,7 +459,7 @@ namespace TextMining
 
             gainRatioObjList = temp2;
 
-            return gainRatioObjList;
+            return gainRatioObjList.OrderBy(x=>x.index).ToList();
         }
 
         private List<byte> GetColumnFromVectorXML(int x)
@@ -509,10 +509,8 @@ namespace TextMining
                 {
                     for (int i = 0; i < list.Count; i++)
                     {
-                        if (i == itemAttr.index)
-                        {
+                        if (i == itemAttr.index) 
                             vectLine += itemAttr.index.ToString() + ":" + list[i].ToString() + ",";
-                        }
                     }
                 }
                 using (FileStream fs = new FileStream(projectDirectory,FileMode.Append))

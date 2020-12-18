@@ -29,9 +29,8 @@ namespace TextMining
              engine.SortAndPrintWordsDictionary();
 
              engine.MakeVectors();
-             //engine.PrintVectors();
+             engine.PrintVectors();
              
-
 
             //  --------- Target classes PROCESSED --------- //
             engine.ExtractCodeTopicsFromXML(sourceDirectory);
