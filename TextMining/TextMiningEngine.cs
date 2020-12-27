@@ -526,16 +526,20 @@ namespace TextMining
                 {
                     for (int i = 0; i < list.Count; i++)
                     {
-                        if (i == itemAttr.index) 
+                        if (i == itemAttr.index && list[i] != 0)  
                             vectLine += itemAttr.index.ToString() + ":" + list[i].ToString() + ",";
                     }
                 }
                 using (FileStream fs = new FileStream(projectDirectory,FileMode.Append))
                 {
-                    var stringBuilder = new StringBuilder(vectLine);
-                    stringBuilder.Remove(vectLine.LastIndexOf(","), 1);
-                    stringBuilder.Insert(vectLine.LastIndexOf(","), " # ");
-                    vectLine = stringBuilder.ToString() + targetClasses[lineCt];
+                    if (vectLine != "")
+                    {
+                        var stringBuilder = new StringBuilder(vectLine);
+                        stringBuilder.Remove(vectLine.LastIndexOf(","), 1);
+                        stringBuilder.Insert(vectLine.LastIndexOf(","), " # ");
+                        vectLine = stringBuilder.ToString() + targetClasses[lineCt];
+                    }
+                    else vectLine += "# " + targetClasses[lineCt];
                     
                     StreamWriter sw = new StreamWriter(fs);
                     sw.WriteLine(vectLine);
