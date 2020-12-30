@@ -16,25 +16,17 @@ namespace TextMining
             TextMiningEngine engine = new TextMiningEngine();
             string contentFromFiles = engine.GetNodesValuesFromXML(sourceDirectory, "title", "text");
             contentFromFiles = engine.FilterByDelimiters(contentFromFiles);
+            engine.ExtractCodeTopicsFromXML(sourceDirectory);
 
-            /**/
-            engine.MakeDictionary(contentFromFiles);
-             //engine.PrintWordsDictionary();
 
-             engine.MakeListOfDictionaries(contentFromFiles);
-             //engine.PrintListOfDictionaries();
 
-             engine.ApplyStowordsFiltering();
 
-             engine.SortAndPrintWordsDictionary();
 
-             engine.MakeVectors();
-             engine.PrintVectors();
-             
+            engine.FeatureExtractionStep1(contentFromFiles);
+            //engine.PrintVectors();
 
             //  --------- Target classes PROCESSED --------- //
-            engine.ExtractCodeTopicsFromXML(sourceDirectory);
-            engine.FeatureSelectionStep();
+            engine.FeatureSelectionStep2();
             //engine.PrintTopicsDictionary();
             //          --------- < DONE > ---------         //
             

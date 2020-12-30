@@ -52,6 +52,30 @@ namespace TextMining
             return content;
         }
 
+        public void ExtractCodeTopicsFromXML(string path)
+        {
+            int keyPerFile = 0;
+            foreach (string file in Directory.EnumerateFiles(path, "*.xml"))
+            {
+                string codePerFile = "";
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(file);
+
+                XmlNodeList codeNodes = xmlDoc.GetElementsByTagName("codes");
+                for (int i = 0; i < codeNodes.Count; i++)
+                {
+                    if (codeNodes[i].Attributes[0].InnerText.ToString() == "bip:topics:1.0")
+                    {
+                        foreach (XmlNode child in codeNodes[i].ChildNodes)
+                            codePerFile += child.Attributes[0].InnerText.ToString() + " ";
+                        topicsDictionary.Add(keyPerFile, codePerFile);
+                    }
+                }
+                keyPerFile++;
+            }
+
+        }
+
         public string FilterByDelimiters(string content)
         {
             string[] delimiters = new string[] { " ", ".", ",", ":", ";", "!", "?", "%", "&", "$", "@", "-", "+", "/", "\t", "*", "'",
@@ -74,7 +98,7 @@ namespace TextMining
             return lastKey;
         }
 
-        public void MakeDictionary(string content)
+        private void MakeDictionary(string content)
         {
             string[] delimiters = new string[] { " " };
             string[] parts = content.Split(delimiters, StringSplitOptions.None);
@@ -102,7 +126,7 @@ namespace TextMining
             }
         }
 
-        public void MakeListOfDictionaries(string content)
+        private void MakeListOfDictionaries(string content)
         {
             Dictionary<string, int> dictionary = new Dictionary<string, int>();
             string[] delimiters = new string[] { " " };
@@ -139,31 +163,7 @@ namespace TextMining
                 }
             }
         }
-
-        public void ExtractCodeTopicsFromXML(string path)
-        {
-            int keyPerFile = 0;
-            foreach (string file in Directory.EnumerateFiles(path, "*.xml"))
-            {
-                string codePerFile = "";
-                XmlDocument xmlDoc = new XmlDocument();
-                xmlDoc.Load(file);
-                
-                XmlNodeList codeNodes = xmlDoc.GetElementsByTagName("codes");
-                for (int i = 0; i < codeNodes.Count; i++)
-                {
-                    if(codeNodes[i].Attributes[0].InnerText.ToString() == "bip:topics:1.0")
-                    {
-                        foreach (XmlNode child in codeNodes[i].ChildNodes)
-                            codePerFile += child.Attributes[0].InnerText.ToString() + " ";
-                        topicsDictionary.Add(keyPerFile,codePerFile);
-                    }
-                }
-                keyPerFile++;
-            }
-            
-        }
-
+        
         private void GetStopWordsFromTXT(string path)
         {
             StreamReader reader = new StreamReader(path);
@@ -175,7 +175,7 @@ namespace TextMining
             }
         }
 
-        public void ApplyStowordsFiltering()
+        private void ApplyStowordsFiltering()
         {
             string stopwordsPath = @"..\..\..\..\stopwords.txt";
             GetStopWordsFromTXT(stopwordsPath);
@@ -198,8 +198,8 @@ namespace TextMining
             // Stopwords removed + print (2)
             PrintNrOfAllWordsFromList();
         }
-        
-        public void SortAndPrintWordsDictionary()
+
+        private void SortAndPrintWordsDictionary()
         {
             try
             {
@@ -218,9 +218,7 @@ namespace TextMining
                 Console.WriteLine("\"wordsDictionary\" cannot be null!");
             }
         }
-
-
-
+        
         private List<byte> InitVector()
         {
             List<byte> list = new List<byte>();
@@ -233,7 +231,7 @@ namespace TextMining
             return list;
         }
 
-        public void MakeVectors()
+        private void MakeVectors()
         {
             int i;
             byte frequency = 0;
@@ -260,9 +258,23 @@ namespace TextMining
                 vectorList = InitVector();
             }
         }
+        
+        public void FeatureExtractionStep1(string XmlContentFromFiles)
+        {
+            if (!String.IsNullOrEmpty(XmlContentFromFiles))
+            {
+                MakeDictionary(XmlContentFromFiles);
+                MakeListOfDictionaries(XmlContentFromFiles);
+                ApplyStowordsFiltering();
+                SortAndPrintWordsDictionary();
+                MakeVectors();
+            }
+            else Console.WriteLine("Error while reading XML files; Check if the root path is correct!");
+        }
 
-        
-        
+
+
+
         private Dictionary<string, int> ProcessingTopicsDictionary()
         {
             var firstTopicDictionary = new Dictionary<string, int>();
@@ -470,7 +482,7 @@ namespace TextMining
             return temp;
         }
 
-        public void FeatureSelectionStep()
+        public void FeatureSelectionStep2()
         {
             //  Process only the first topic from the sample
             var xmlClasses = ProcessingTopicsDictionary();
