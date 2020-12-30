@@ -520,7 +520,7 @@ namespace TextMining
                 string allClasses = "";
 
                 foreach (var itemAttr in arffAttributes)
-                    sw.WriteLine("@attribute " + itemAttr.attribute);
+                    sw.WriteLine("@attribute " + itemAttr.attribute + " " + itemAttr.index);
 
                 foreach (var targetClass in targetClasses)
                     allClasses += targetClass + ",";
