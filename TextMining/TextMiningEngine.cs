@@ -548,8 +548,6 @@ namespace TextMining
             */
 
             // Writing the trainingSet file
-
-
             foreach (var list in VectorXMLs.Except(VectorXMLTestSet))
             {
                 string vectLine = "";
@@ -568,21 +566,29 @@ namespace TextMining
                         var stringBuilder = new StringBuilder(vectLine);
                         stringBuilder.Remove(vectLine.LastIndexOf(","), 1);
                         stringBuilder.Insert(vectLine.LastIndexOf(","), " # ");
+
+                        while (randomTestIndexes.Contains(lineCt))
+                            lineCt++;
+
                         vectLine = stringBuilder.ToString() + targetClasses[lineCt];
                     }
-                    else vectLine += "# " + targetClasses[lineCt];
+                    else
+                    {
+                        while (randomTestIndexes.Contains(lineCt))
+                            lineCt++;
+                        vectLine += "# " + targetClasses[lineCt];
+                    }
 
                     StreamWriter sw = new StreamWriter(fs);
-
                     sw.WriteLine(vectLine);
                     sw.Flush();
-
 
                     if (lineCt < targetClasses.Count)
                         lineCt++;
                 }
                 // Writing the testSet file
             }
+            // TRANING SET DONE - I HOPE
     }
 
         private List<List<byte>> getRandom30ProcOfVectorXMLEntries(List<int> randomNumbers)
