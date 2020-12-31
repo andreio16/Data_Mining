@@ -508,10 +508,14 @@ namespace TextMining
             //  Generate .arff export file// Extract Target Classes
             var targetClasses = GetFirstColumnFromTopicsDictionary();
             string workingDirectory = Environment.CurrentDirectory;
-            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Traning.arff";
-            int lineCt = 0;
-            int tempCt = 0;
+            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Test.arff";
 
+            var randomTestIndexes = new List<int>();
+            var VectorXMLTestSet = getRandom30ProcOfVectorXMLEntries(randomTestIndexes);
+            int tempCt = 0;
+            int lineCt = 0;
+
+            // Write @attribute in test + traning files
             for (tempCt = 0; tempCt < 2; tempCt++)
             {
                 if (File.Exists(projectDirectory))
@@ -533,10 +537,20 @@ namespace TextMining
                     sw.WriteLine("@data");
                     sw.Flush();
                 }
-                projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Test.arff";
+                projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Traning.arff";
             }
+            // DONE
 
-            foreach (var list in VectorXMLs) 
+            /*
+            MakeArffFile(new List<List<byte>>(VectorXMLs.Except(VectorXMLTestSet)), arffAttributes, projectDirectory);
+            projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Test.arff";
+            MakeArffFile(VectorXMLTestSet, arffAttributes, projectDirectory);
+            */
+
+            // Writing the trainingSet file
+
+
+            foreach (var list in VectorXMLs.Except(VectorXMLTestSet))
             {
                 string vectLine = "";
                 for (int i = 0; i < list.Count; i++)
@@ -547,7 +561,7 @@ namespace TextMining
                             vectLine += itemAttr.index + ":" + list[i] + ",";
                     }
                 }
-                using (FileStream fs = new FileStream(projectDirectory,FileMode.Append))
+                using (FileStream fs = new FileStream(projectDirectory, FileMode.Append))
                 {
                     if (vectLine != "")
                     {
@@ -557,30 +571,26 @@ namespace TextMining
                         vectLine = stringBuilder.ToString() + targetClasses[lineCt];
                     }
                     else vectLine += "# " + targetClasses[lineCt];
-                    
+
                     StreamWriter sw = new StreamWriter(fs);
+
                     sw.WriteLine(vectLine);
                     sw.Flush();
+
 
                     if (lineCt < targetClasses.Count)
                         lineCt++;
                 }
+                // Writing the testSet file
             }
+    }
 
-
-            //-----
-            var listtt = getRandom30ProcOfVectorXMLEntries();
-
-
-            //-----
-        }
-
-        private List<List<byte>> getRandom30ProcOfVectorXMLEntries()
+        private List<List<byte>> getRandom30ProcOfVectorXMLEntries(List<int> randomNumbers)
         {
             var rand = new Random(DateTime.UtcNow.Millisecond);
             var temp30ProcOfVectorXML = new List<List<byte>>();
             int threshold = 30 * VectorXMLs.Count() / 100;
-            var randomNumbers = new List<int>();
+            //var randomNumbers = new List<int>();
             int counter = 0;
 
             while(counter < threshold)
@@ -589,16 +599,51 @@ namespace TextMining
                 if (randomNumbers.IndexOf(random) != -1)
                 {
                     int value = random;
-                    while (value == random && randomNumbers.IndexOf(random) != -1) 
+                    while (value == random && randomNumbers.Contains(random) == false)  
                         random = rand.Next(0, VectorXMLs.Count());
                 }
                 temp30ProcOfVectorXML.Add(VectorXMLs[random]);
                 randomNumbers.Add(random);
                 counter++;
             }
-
-
             return temp30ProcOfVectorXML;
+        }
+
+        private void MakeArffFile(List<List<byte>> vector, List<arff> arffAttributes, string newFilePath)
+        {
+            var targetClasses = GetFirstColumnFromTopicsDictionary();
+            int lineCt = 0;
+
+            foreach (var list in vector)
+            {
+                string vectLine = "";
+                for (int i = 0; i < list.Count; i++)
+                {
+                    foreach (var itemAttr in arffAttributes)
+                    {
+                        if (i == itemAttr.index && list[i] != 0)
+                            vectLine += itemAttr.index.ToString() + ":" + list[i].ToString() + ",";
+                    }
+                }
+                using (FileStream fs = new FileStream(newFilePath, FileMode.Append))
+                {
+                    if (vectLine != "")
+                    {
+                        var stringBuilder = new StringBuilder(vectLine);
+                        stringBuilder.Remove(vectLine.LastIndexOf(","), 1);
+                        stringBuilder.Insert(vectLine.LastIndexOf(","), " # ");
+                        vectLine = stringBuilder.ToString() + targetClasses[lineCt];
+                    }
+                    else vectLine += "# " + targetClasses[lineCt];
+
+                    StreamWriter sw = new StreamWriter(fs);
+                    sw.WriteLine(vectLine);
+                    sw.Flush();
+
+                    if (lineCt < targetClasses.Count)
+                        lineCt++;
+                }
+            }
         }
         
 
