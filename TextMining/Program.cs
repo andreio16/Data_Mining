@@ -22,14 +22,15 @@ namespace TextMining
 
 
 
-            engine.FeatureExtractionStep1(contentFromFiles);
+            engine.ApplyFeatureExtraction_Step1(contentFromFiles);
             //engine.PrintVectors();
 
-            //  --------- Target classes PROCESSED --------- //
-            engine.FeatureSelectionStep2();
+            // - Target classes PROCESSED -
+            engine.ApplyFeatureSelection_Step2();
             //engine.PrintTopicsDictionary();
-            //          --------- < DONE > ---------         //
-            
+
+            var outClasses = new List<string>();
+            var normalization = engine.ApplyNormalization_Step3(@"C:\Users\Andrei\Desktop\ACS_1\TextMining\Labs1\TextMining\Export-Test.arff", outClasses);
         }
     }
 }

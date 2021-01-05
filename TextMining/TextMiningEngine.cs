@@ -13,12 +13,14 @@ namespace TextMining
         public double gainRatioValue;
         public string attribute;
         public int index;
+        public int newIndex;
 
         public arff(string attribute, int index, double gainRatioValue)
         {
             this.gainRatioValue = gainRatioValue;
             this.attribute = attribute;
             this.index = index;
+            this.newIndex = 0;
         }
     }
 
@@ -259,7 +261,7 @@ namespace TextMining
             }
         }
         
-        public void FeatureExtractionStep1(string XmlContentFromFiles)
+        public void ApplyFeatureExtraction_Step1(string XmlContentFromFiles)
         {
             if (!String.IsNullOrEmpty(XmlContentFromFiles))
             {
@@ -273,8 +275,7 @@ namespace TextMining
         }
 
 
-
-
+        
         private Dictionary<string, int> ProcessingTopicsDictionary()
         {
             var firstTopicDictionary = new Dictionary<string, int>();
@@ -474,6 +475,14 @@ namespace TextMining
             return gainRatioObjList.OrderBy(x=>x.index).ToList();
         }
 
+        private List<arff> CreateNewIndexDomainAfter10ProcFiltering(List<arff> arffs)
+        {
+            for (int i = 0; i < arffs.Count; i++)
+                arffs[i].newIndex = i;
+
+            return arffs;
+        }
+
         private List<byte> GetColumnFromVectorXML(int x)
         {
             var temp = new List<byte>();
@@ -482,7 +491,7 @@ namespace TextMining
             return temp;
         }
 
-        public void FeatureSelectionStep2()
+        public void ApplyFeatureSelection_Step2()
         {
             //  Process only the first topic from the sample
             var xmlClasses = ProcessingTopicsDictionary();
@@ -501,7 +510,7 @@ namespace TextMining
 
             //  Compute GainRatio -> took only 10% most relevant attributes
             var GainRatioList = ComputeInfoGain(globalEntropy);
-            var arffAttributes = GetRelevantAttrFromGainRatio(GainRatioList, 10);
+            var arffAttributes = CreateNewIndexDomainAfter10ProcFiltering(GetRelevantAttrFromGainRatio(GainRatioList, 10));///
             GainRatioList.Clear();
 
 
@@ -514,14 +523,13 @@ namespace TextMining
             var rareIndexes = new List<int>();
             var rareVectorsXML = GetRareVectors(arffAttributes, rareIndexes);
 
-            
             var filteredVectorXML = new List<List<byte>>(VectorXMLs.Except(rareVectorsXML));
-            
+
             var targetClasses = GetFilteredTargetClasses(rareIndexes);
 
             var randomTestIndexes = new List<int>();
             var VectorXMLTestSet = getRandom30ProcOfVectorXMLEntries(filteredVectorXML, randomTestIndexes);
-            
+
             AttachAttributesInExport_arff(projectTestDir, arffAttributes, targetClasses);
             AttachAttributesInExport_arff(projectTrainingDir, arffAttributes, targetClasses);
 
@@ -535,7 +543,7 @@ namespace TextMining
                     foreach (var itemAttr in arffAttributes)
                     {
                         if (i == itemAttr.index && list[i] != 0)
-                            vectLine += itemAttr.index + ":" + list[i] + ",";
+                            vectLine += itemAttr.newIndex + ":" + list[i] + ",";///
                     }
                 }
                 using (FileStream fs = new FileStream(projectTrainingDir, FileMode.Append))
@@ -559,7 +567,7 @@ namespace TextMining
                         lineCt++;
                 }
             }
-            // - TRANING SET DONE - 
+            Console.WriteLine(">> 70% Training Set exported successfully!");
             
             // Writing the testSET file
             lineCt = 0;
@@ -571,7 +579,7 @@ namespace TextMining
                     foreach (var itemAttr in arffAttributes)
                     {
                         if (i == itemAttr.index && list[i] != 0)
-                            vectLine += itemAttr.index + ":" + list[i] + ",";
+                            vectLine += itemAttr.newIndex + ":" + list[i] + ",";///
                     }
                 }
                 using (FileStream fs = new FileStream(projectTestDir, FileMode.Append))
@@ -592,8 +600,7 @@ namespace TextMining
                         lineCt++;
                 }
             }
-            // - TEST SET DONE -
-            //--------------------------------------------------------------------------------------------------------------------
+            Console.WriteLine(">> 30% Test Set exported successfully!");
         }
 
         private void AttachAttributesInExport_arff(string filePath, List<arff> arffAttributes, List<string> targetClasses)
@@ -607,7 +614,7 @@ namespace TextMining
                 string allClasses = "";
 
                 foreach (var itemAttr in arffAttributes)
-                    sw.WriteLine("@attribute " + itemAttr.attribute + " " + itemAttr.index);
+                    sw.WriteLine("@attribute " + itemAttr.attribute + " " + itemAttr.newIndex);///
 
                 foreach (var targetClass in targetClasses)
                     allClasses += targetClass + ",";
@@ -679,7 +686,74 @@ namespace TextMining
             }
             return temp30ProcOfVectorXML;
         }
-        
+
+
+
+        public List<List<double>> ApplyNormalization_Step3(string arffPath, List<string> outClasses)
+        {
+            var temp = new List<List<double>>();
+            var reader = new StreamReader(arffPath);
+            var line = "";
+            var classTag = "#";
+            var dataTag = "@data";
+            var attrTag = "@attribute";
+            bool interestingData = false;
+            string[] delimiters = new string[] { ",", ":", " ", "" };
+            var vectorMatrix = new List<Dictionary<int, byte>>();
+            
+            
+            // Import classes and attributes from arff
+            outClasses.Clear();
+            while (!reader.EndOfStream)
+            {
+                line = reader.ReadLine();
+                var dictionary = new Dictionary<int, byte>();
+                if (interestingData == true)
+                {
+                    if (line.Contains(classTag))
+                        outClasses.Add(line.Substring(line.IndexOf(classTag) + 1));
+
+                    string[] words = line.Split(delimiters, StringSplitOptions.None);
+                    int index = 0;
+                    byte attrib = 0;
+
+                    for (int i = 0; i < words.Count(); i+=2)
+                    {
+                        if (words[i] == "#")
+                            break;
+
+                        if (i % 2 == 0)   
+                            index = Int32.Parse(words[i]);
+
+                        if ((i + 1) % 2 != 0)
+                            attrib = Byte.Parse(words[i + 1]);
+
+                        dictionary.Add(index, attrib); 
+                    }
+                    vectorMatrix.Add(dictionary);
+                }
+
+                if (line.StartsWith(dataTag))
+                    interestingData = true;
+            }
+            reader.Close();
+
+            // Start Cornell Smart Normalization
+            var normalizationList = new List<double>();
+            foreach (var vector in vectorMatrix)
+            {
+                foreach (KeyValuePair<int,byte> elem in vector)
+                {
+                    if (elem.Value != 0)
+                        normalizationList.Add(1 + Math.Log(1 + Math.Log(elem.Value, 10), 10));
+                    else normalizationList.Add(0);
+                }
+                temp.Add(normalizationList);
+                normalizationList = new List<double>();
+            }
+            return temp;
+        }
+
 
 
         // ~~~ All Print Functions !!! ~~~  //
