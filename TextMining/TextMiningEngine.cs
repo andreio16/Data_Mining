@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace TextMining
@@ -677,7 +676,7 @@ namespace TextMining
                 if (randomNumbers.IndexOf(random) != -1)
                 {
                     int value = random;
-                    while (value == random && randomNumbers.Contains(random) == false)
+                    while (value == random && randomNumbers.Contains(random) == true)
                         random = rand.Next(0, xmlVectors.Count());
                 }
                 temp30ProcOfVectorXML.Add(xmlVectors[random]);
@@ -697,6 +696,7 @@ namespace TextMining
             var classTag = "#";
             var dataTag = "@data";
             var attrTag = "@attribute";
+            int numOfAttributes = 0;
             bool interestingData = false;
             string[] delimiters = new string[] { ",", ":", " ", "" };
             var vectorMatrix = new List<Dictionary<int, byte>>();
@@ -708,6 +708,10 @@ namespace TextMining
             {
                 line = reader.ReadLine();
                 var dictionary = new Dictionary<int, byte>();
+
+                if (line.Contains(attrTag))
+                    numOfAttributes++;
+
                 if (interestingData == true)
                 {
                     if (line.Contains(classTag))
@@ -742,14 +746,23 @@ namespace TextMining
             var normalizationList = new List<double>();
             foreach (var vector in vectorMatrix)
             {
-                foreach (KeyValuePair<int,byte> elem in vector)
+                for (int i = 0; i < numOfAttributes; i++)
                 {
-                    if (elem.Value != 0)
-                        normalizationList.Add(1 + Math.Log(1 + Math.Log(elem.Value, 10), 10));
-                    else normalizationList.Add(0);
+                    foreach (KeyValuePair<int, byte> elem in vector)
+                    {
+                        if (i != elem.Key)
+                            normalizationList.Add(0);
+                        else 
+                        {
+                            if (elem.Value != 0)
+                                normalizationList.Add(1 + Math.Log(1 + Math.Log(elem.Value, 10), 10));
+                            else
+                                normalizationList.Add(0);
+                        }
+                    }
                 }
-                temp.Add(normalizationList);
-                normalizationList = new List<double>();
+                temp.Add(normalizationList.ToList());
+                normalizationList.Clear();
             }
             return temp;
         }
