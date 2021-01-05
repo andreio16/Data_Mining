@@ -744,25 +744,25 @@ namespace TextMining
 
             // Start Cornell Smart Normalization
             var normalizationList = new List<double>();
+            double norm = 0;
             foreach (var vector in vectorMatrix)
             {
+                normalizationList.Clear();
                 for (int i = 0; i < numOfAttributes; i++)
                 {
                     foreach (KeyValuePair<int, byte> elem in vector)
                     {
-                        if (i != elem.Key)
-                            normalizationList.Add(0);
-                        else 
+                        if (i == elem.Key)
                         {
                             if (elem.Value != 0)
-                                normalizationList.Add(1 + Math.Log(1 + Math.Log(elem.Value, 10), 10));
-                            else
-                                normalizationList.Add(0);
+                                norm = 1 + Math.Log(1 + Math.Log(elem.Value, 10), 10);
+                            break;
                         }
+                        else norm = 0;
                     }
+                    normalizationList.Add(norm);
                 }
                 temp.Add(normalizationList.ToList());
-                normalizationList.Clear();
             }
             return temp;
         }
