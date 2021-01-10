@@ -29,8 +29,8 @@ namespace TextMining
             engine.ApplyFeatureSelection_Step2();
             //engine.PrintTopicsDictionary();
 
-            var outClasses = new List<string>();
-            var normalization = engine.ApplyNormalization_Step3(@"C:\Users\Andrei\Desktop\ACS_1\TextMining\Labs1\TextMining\Export-Test.arff", outClasses);
+            engine.ApplyLearningAlgRocchio_Step3();
+
         }
     }
 }

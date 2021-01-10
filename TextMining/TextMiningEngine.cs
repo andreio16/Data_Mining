@@ -33,6 +33,8 @@ namespace TextMining
         private List<string> sortedWordsDictionary = new List<string>();
         private List<List<byte>> VectorXMLs = new List<List<byte>>();
 
+
+
         public string GetNodesValuesFromXML(string path, string tag1, string tag2)
         {
             string content = "";
@@ -267,6 +269,7 @@ namespace TextMining
                 MakeDictionary(XmlContentFromFiles);
                 MakeListOfDictionaries(XmlContentFromFiles);
                 ApplyStowordsFiltering();
+                Console.WriteLine("All words extracted and sorted successfully :");
                 SortAndPrintWordsDictionary();
                 MakeVectors();
             }
@@ -490,118 +493,6 @@ namespace TextMining
             return temp;
         }
 
-        public void ApplyFeatureSelection_Step2()
-        {
-            //  Process only the first topic from the sample
-            var xmlClasses = ProcessingTopicsDictionary();
-            var globalEntropy = CalculateEntropy(xmlClasses);
-
-
-            //  Entropy DONE
-            Console.WriteLine("Calculated Entropy for attribute set : {0}", globalEntropy);
-            foreach (KeyValuePair<string, int> pair in xmlClasses)
-                Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
-
-
-            //  Needed because of first topic filtering
-            AdjustVectorsAndTopicsDictionary();
-
-
-            //  Compute GainRatio -> took only 10% most relevant attributes
-            var GainRatioList = ComputeInfoGain(globalEntropy);
-            var arffAttributes = CreateNewIndexDomainAfter10ProcFiltering(GetRelevantAttrFromGainRatio(GainRatioList, 10));///
-            GainRatioList.Clear();
-
-
-            //--------------------------------------------------------------------------------------------------------------------
-            //  Generate .arff export file// Extract Target Classes
-            string workingDirectory = Environment.CurrentDirectory;
-            string projectTestDir = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Test.arff";
-            string projectTrainingDir = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Training.arff";
-            
-            var rareIndexes = new List<int>();
-            var rareVectorsXML = GetRareVectors(arffAttributes, rareIndexes);
-
-            var filteredVectorXML = new List<List<byte>>(VectorXMLs.Except(rareVectorsXML));
-
-            var targetClasses = GetFilteredTargetClasses(rareIndexes);
-
-            var randomTestIndexes = new List<int>();
-            var VectorXMLTestSet = getRandom30ProcOfVectorXMLEntries(filteredVectorXML, randomTestIndexes);
-
-            AttachAttributesInExport_arff(projectTestDir, arffAttributes, targetClasses);
-            AttachAttributesInExport_arff(projectTrainingDir, arffAttributes, targetClasses);
-
-            int lineCt = 0;
-            // Writing the trainingSet file
-            foreach (var list in filteredVectorXML.Except(VectorXMLTestSet))
-            {
-                string vectLine = "";
-                for (int i = 0; i < list.Count; i++)
-                {
-                    foreach (var itemAttr in arffAttributes)
-                    {
-                        if (i == itemAttr.index && list[i] != 0)
-                            vectLine += itemAttr.newIndex + ":" + list[i] + ",";///
-                    }
-                }
-                using (FileStream fs = new FileStream(projectTrainingDir, FileMode.Append))
-                {
-                    if (vectLine != "")
-                    {
-                        var stringBuilder = new StringBuilder(vectLine);
-                        stringBuilder.Remove(vectLine.LastIndexOf(","), 1);
-                        stringBuilder.Insert(vectLine.LastIndexOf(","), " # ");
-
-                        while (randomTestIndexes.Contains(lineCt))
-                            lineCt++;
-
-                        vectLine = stringBuilder.ToString() + targetClasses[lineCt];
-
-                        StreamWriter sw = new StreamWriter(fs);
-                        sw.WriteLine(vectLine);
-                        sw.Flush();
-                    }
-                    if (lineCt < targetClasses.Count)
-                        lineCt++;
-                }
-            }
-            Console.WriteLine(">> 70% Training Set exported successfully!");
-            
-            // Writing the testSET file
-            lineCt = 0;
-            foreach (var list in VectorXMLTestSet)
-            {
-                string vectLine = "";
-                for (int i = 0; i < list.Count; i++)
-                {
-                    foreach (var itemAttr in arffAttributes)
-                    {
-                        if (i == itemAttr.index && list[i] != 0)
-                            vectLine += itemAttr.newIndex + ":" + list[i] + ",";///
-                    }
-                }
-                using (FileStream fs = new FileStream(projectTestDir, FileMode.Append))
-                {
-                    if (vectLine != "")
-                    {
-                        var stringBuilder = new StringBuilder(vectLine);
-                        stringBuilder.Remove(vectLine.LastIndexOf(","), 1);
-                        stringBuilder.Insert(vectLine.LastIndexOf(","), " # ");
-
-                        vectLine = stringBuilder.ToString() + targetClasses[randomTestIndexes[lineCt]];
-
-                        StreamWriter sw = new StreamWriter(fs);
-                        sw.WriteLine(vectLine);
-                        sw.Flush();
-                    }
-                    if (lineCt < targetClasses.Count)
-                        lineCt++;
-                }
-            }
-            Console.WriteLine(">> 30% Test Set exported successfully!");
-        }
-
         private void AttachAttributesInExport_arff(string filePath, List<arff> arffAttributes, List<string> targetClasses)
         {
             if (File.Exists(filePath))
@@ -686,13 +577,126 @@ namespace TextMining
             return temp30ProcOfVectorXML;
         }
 
+        public void ApplyFeatureSelection_Step2()
+        {
+            //  Process only the first topic from the sample
+            var xmlClasses = ProcessingTopicsDictionary();
+            var globalEntropy = CalculateEntropy(xmlClasses);
 
 
-        public List<List<double>> ApplyNormalization_Step3(string arffPath, List<string> outClasses)
+            //  Entropy DONE
+            Console.WriteLine("Calculated Entropy for attribute set : {0}", globalEntropy);
+            foreach (KeyValuePair<string, int> pair in xmlClasses)
+                Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
+
+
+            //  Needed because of first topic filtering
+            AdjustVectorsAndTopicsDictionary();
+
+
+            //  Compute GainRatio -> took only 10% most relevant attributes
+            var GainRatioList = ComputeInfoGain(globalEntropy);
+            var arffAttributes = CreateNewIndexDomainAfter10ProcFiltering(GetRelevantAttrFromGainRatio(GainRatioList, 10));///
+            GainRatioList.Clear();
+
+
+            //--------------------------------------------------------------------------------------------------------------------
+            //  Generate .arff export file// Extract Target Classes
+            string workingDirectory = Environment.CurrentDirectory;
+            string projectTestDir = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Test.arff";
+            string projectTrainingDir = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Training.arff";
+
+            var rareIndexes = new List<int>();
+            var rareVectorsXML = GetRareVectors(arffAttributes, rareIndexes);
+
+            var filteredVectorXML = new List<List<byte>>(VectorXMLs.Except(rareVectorsXML));
+
+            var targetClasses = GetFilteredTargetClasses(rareIndexes);
+
+            var randomTestIndexes = new List<int>();
+            var VectorXMLTestSet = getRandom30ProcOfVectorXMLEntries(filteredVectorXML, randomTestIndexes);
+
+            AttachAttributesInExport_arff(projectTestDir, arffAttributes, targetClasses);
+            AttachAttributesInExport_arff(projectTrainingDir, arffAttributes, targetClasses);
+
+            int lineCt = 0;
+            // Writing the trainingSet file
+            foreach (var list in filteredVectorXML.Except(VectorXMLTestSet))
+            {
+                string vectLine = "";
+                for (int i = 0; i < list.Count; i++)
+                {
+                    foreach (var itemAttr in arffAttributes)
+                    {
+                        if (i == itemAttr.index && list[i] != 0)
+                            vectLine += itemAttr.newIndex + ":" + list[i] + ",";///
+                    }
+                }
+                using (FileStream fs = new FileStream(projectTrainingDir, FileMode.Append))
+                {
+                    if (vectLine != "")
+                    {
+                        var stringBuilder = new StringBuilder(vectLine);
+                        stringBuilder.Remove(vectLine.LastIndexOf(","), 1);
+                        stringBuilder.Insert(vectLine.LastIndexOf(","), " # ");
+
+                        while (randomTestIndexes.Contains(lineCt))
+                            lineCt++;
+
+                        vectLine = stringBuilder.ToString() + targetClasses[lineCt];
+
+                        StreamWriter sw = new StreamWriter(fs);
+                        sw.WriteLine(vectLine);
+                        sw.Flush();
+                    }
+                    if (lineCt < targetClasses.Count)
+                        lineCt++;
+                }
+            }
+            Console.WriteLine(">> 70% Training Set exported successfully!");
+
+            // Writing the testSET file
+            lineCt = 0;
+            foreach (var list in VectorXMLTestSet)
+            {
+                string vectLine = "";
+                for (int i = 0; i < list.Count; i++)
+                {
+                    foreach (var itemAttr in arffAttributes)
+                    {
+                        if (i == itemAttr.index && list[i] != 0)
+                            vectLine += itemAttr.newIndex + ":" + list[i] + ",";///
+                    }
+                }
+                using (FileStream fs = new FileStream(projectTestDir, FileMode.Append))
+                {
+                    if (vectLine != "")
+                    {
+                        var stringBuilder = new StringBuilder(vectLine);
+                        stringBuilder.Remove(vectLine.LastIndexOf(","), 1);
+                        stringBuilder.Insert(vectLine.LastIndexOf(","), " # ");
+
+                        vectLine = stringBuilder.ToString() + targetClasses[randomTestIndexes[lineCt]];
+
+                        StreamWriter sw = new StreamWriter(fs);
+                        sw.WriteLine(vectLine);
+                        sw.Flush();
+                    }
+                    if (lineCt < targetClasses.Count)
+                        lineCt++;
+                }
+            }
+            Console.WriteLine(">> 30% Test Set exported successfully!");
+        }
+
+
+
+        
+        private List<List<double>> ApplyNormalization(string arffPath, List<string> outClasses)
         {
             var temp = new List<List<double>>();
             var reader = new StreamReader(arffPath);
-            var line = "";
+            var line = ""; 
             var classTag = "#";
             var dataTag = "@data";
             var attrTag = "@attribute";
@@ -765,6 +769,16 @@ namespace TextMining
                 temp.Add(normalizationList.ToList());
             }
             return temp;
+        }
+
+        public void ApplyLearningAlgRocchio_Step3()
+        {
+            string workingDirectory = Environment.CurrentDirectory;
+            string testingFilePath = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Test.arff";
+            string trainingFilePath = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\Export-Training.arff";
+
+            var testClasses = new List<string>();
+            var testNormalized = ApplyNormalization(testingFilePath, testClasses);
         }
 
 
