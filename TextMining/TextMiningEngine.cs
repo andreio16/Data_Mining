@@ -771,6 +771,16 @@ namespace TextMining
             return temp;
         }
 
+        private List<double> DivAllElementsByScalar(List<double> list, int scalar)
+        {
+            if(scalar >= 1)
+            {
+                for (int i = 0; i < list.Count; i++)
+                    list[i] /= scalar;
+            }
+            return list;
+        }
+
         public void ApplyLearningAlgRocchio_Step3()
         {
             string workingDirectory = Environment.CurrentDirectory;
@@ -779,6 +789,41 @@ namespace TextMining
 
             var testClasses = new List<string>();
             var testNormalized = ApplyNormalization(testingFilePath, testClasses);
+
+            var trainingClasses = new List<string>();
+            var trainingNormalized = ApplyNormalization(trainingFilePath, trainingClasses);
+
+            var counter = 0;
+            var centroids = new List<List<double>>();
+            var duplicates = new List<string>();
+            var aux_avg = new List<double>();
+            
+
+            for (int i = 0; i < trainingClasses.Count; i++)
+            {
+                counter = 1;
+                aux_avg = trainingNormalized[i];
+                for (int j = i + 1; j < trainingClasses.Count; j++)
+                {                
+                    if (trainingClasses[i] == trainingClasses[j] && duplicates.Contains(trainingClasses[i]) == false) 
+                    {
+                        counter++;
+                        for (int k = 0; k < aux_avg.Count; k++)
+                                aux_avg[k] += trainingNormalized[j][k];
+                    }
+                }
+
+                if (i == trainingClasses.Count - 1 || counter == 1)
+                    aux_avg = trainingNormalized[i];
+
+                if (duplicates.Contains(trainingClasses[i]) == false)
+                    centroids.Add(DivAllElementsByScalar(aux_avg, counter));
+
+                duplicates.Add(trainingClasses[i]);
+                
+            }
+
+
         }
 
 
