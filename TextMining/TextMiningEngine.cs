@@ -781,6 +781,37 @@ namespace TextMining
             return list;
         }
 
+        private double ComputeCosineDistanceSimilarity(List<double> vect1, List<double> vect2)
+        {
+            double distance = 0, numerator = 0, denominator1 = 1, denominator2 = 1;
+            for (int i = 0; i < vect1.Count; i++)
+            {
+                numerator += vect1[i] * vect2[i];
+                denominator1 += vect1[i] * vect1[i];
+                denominator2 += vect2[i] * vect2[i];
+            }
+            distance = numerator / (Math.Sqrt(denominator1) * Math.Sqrt(denominator2));
+            return distance;
+        }
+
+        private double ComputeManhattanDistanceSimilarity(List<double> vect1, List<double> vect2)
+        {
+            double distance = 0;
+            for (int i = 0; i < vect1.Count; i++)
+                distance += Math.Abs(vect1[i] - vect2[i]);
+            return distance;
+        }
+
+        private double ComputeEuclideanDistanceSimilarity(List<double> vect1, List<double> vect2)
+        {
+            double distance = 0;
+            for (int i = 0; i < vect1.Count; i++)
+            {
+                distance += Math.Pow(Math.Abs(vect1[i] - vect2[i]), 2);
+            }
+            return Math.Sqrt(distance);
+        }
+
         public void ApplyLearningAlgRocchio_Step3()
         {
             string workingDirectory = Environment.CurrentDirectory;
@@ -794,11 +825,12 @@ namespace TextMining
             var trainingNormalized = ApplyNormalization(trainingFilePath, trainingClasses);
 
             var counter = 0;
-            var centroids = new List<List<double>>();
-            var duplicates = new List<string>();
             var aux_avg = new List<double>();
+            var duplicates = new List<string>();
+            var centroids = new List<List<double>>();
+            var centroidsClasses = new List<string>(trainingClasses.Distinct());
             
-
+            // Compute Rocchio Centroids
             for (int i = 0; i < trainingClasses.Count; i++)
             {
                 counter = 1;
@@ -822,7 +854,28 @@ namespace TextMining
                 duplicates.Add(trainingClasses[i]);
                 
             }
+            trainingNormalized.Clear();
 
+
+            double distance;
+            var distanceList = new List<double>();
+            var predictedClasses = new List<string>();
+        
+            // Compute testing-training distances
+            for (int i = 0; i < testNormalized.Count; i++)
+            {
+                distanceList.Clear();
+                for (int j = 0; j < centroids.Count; j++)
+                {
+                    //distance = ComputeCosineDistanceSimilarity(testNormalized[i], centroids[j]);
+                    //distance = ComputeManhattanDistanceSimilarity(testNormalized[i], centroids[j]);
+                    distance=ComputeEuclideanDistanceSimilarity(testNormalized[i], centroids[j]);
+                    distanceList.Add(distance);
+                }
+                var minValue = distanceList.Min(x => x);
+                var index = distanceList.IndexOf(minValue);
+                predictedClasses.Add(centroidsClasses[index]);
+            }
 
         }
 
