@@ -208,7 +208,8 @@ namespace TextMining
             {
                 sortedWordsDictionary = wordsDictionary.Keys.ToList();
                 sortedWordsDictionary.Sort();
-                foreach(var key in sortedWordsDictionary)
+                Console.WriteLine("All words extracted and sorted successfully :");
+               foreach(var key in sortedWordsDictionary)
                     Console.WriteLine("{0}: {1}", key, wordsDictionary[key]);
 
                 var temp = new Dictionary<string, int>();
@@ -269,7 +270,6 @@ namespace TextMining
                 MakeDictionary(XmlContentFromFiles);
                 MakeListOfDictionaries(XmlContentFromFiles);
                 ApplyStowordsFiltering();
-                Console.WriteLine("All words extracted and sorted successfully :");
                 SortAndPrintWordsDictionary();
                 MakeVectors();
             }
@@ -791,7 +791,7 @@ namespace TextMining
                 denominator2 += vect2[i] * vect2[i];
             }
             distance = numerator / (Math.Sqrt(denominator1) * Math.Sqrt(denominator2));
-            return distance;
+            return 1 - distance; // (1-disimilarity) = similarity
         }
 
         private double ComputeManhattanDistanceSimilarity(List<double> vect1, List<double> vect2)
@@ -869,7 +869,7 @@ namespace TextMining
                 {
                     //distance = ComputeCosineDistanceSimilarity(testNormalized[i], centroids[j]);
                     //distance = ComputeManhattanDistanceSimilarity(testNormalized[i], centroids[j]);
-                    distance=ComputeEuclideanDistanceSimilarity(testNormalized[i], centroids[j]);
+                    distance = ComputeEuclideanDistanceSimilarity(testNormalized[i], centroids[j]);
                     distanceList.Add(distance);
                 }
                 var minValue = distanceList.Min(x => x);
