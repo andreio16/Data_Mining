@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using System.Text.RegularExpressions;
 
 namespace TextMining
 {
@@ -37,7 +38,11 @@ namespace TextMining
 
         public string GetNodesValuesFromXML(string path, string tag1, string tag2)
         {
-            string content = "";
+            string workingDirectory = Environment.CurrentDirectory;
+            string contentPath = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\temp-aux.txt";
+            if (File.Exists(contentPath))
+                File.Delete(contentPath);
+
             foreach (string file in Directory.EnumerateFiles(path, "*.xml"))
             {
                 XmlDocument xmlDoc = new XmlDocument();
@@ -46,13 +51,21 @@ namespace TextMining
                 XmlNodeList titleNodes = xmlDoc.GetElementsByTagName(tag1);
                 XmlNodeList textNodes = xmlDoc.GetElementsByTagName(tag2);
 
-                for (int i = 0; i < titleNodes.Count; i++)
-                    content +=  titleNodes[i].InnerText.ToString();
-                for (int i = 0; i < textNodes.Count; i++)
-                    content += textNodes[i].InnerText.ToString();
-                content += " #endfile# ";
+                string content = "";
+                using (FileStream fs = new FileStream(contentPath, FileMode.Append))
+                {
+                    for (int i = 0; i < titleNodes.Count; i++)
+                        content += titleNodes[i].InnerText.ToString();
+                    for (int i = 0; i < textNodes.Count; i++)
+                        content += textNodes[i].InnerText.ToString();
+                    content += " #endfile# ";
+
+                    StreamWriter sw = new StreamWriter(fs);
+                    sw.WriteLine(content);
+                    sw.Flush();
+                }
             }
-            return content;
+            return contentPath;
         }
 
         public void ExtractCodeTopicsFromXML(string path)
@@ -81,13 +94,34 @@ namespace TextMining
 
         public string FilterByDelimiters(string content)
         {
+            var reader = new StreamReader(content);
+            string workingDirectory = Environment.CurrentDirectory;
+            string contentPath = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\temp.txt";
+
             string[] delimiters = new string[] { " ", ".", ",", ":", ";", "!", "?", "%", "&", "$", "@", "-", "+", "/", "\t", "*", "'",
-                            "\\", "'s", "'re", "'d", "\"", "(", ")", "<", ">", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
-            string[] parts = content.Split(delimiters, StringSplitOptions.None);
-            string filteredContent = "";
-            for (int i = 0; i < parts.Length; i++)
-                filteredContent += _porter.StemWord(parts[i].ToLower()) + " ";
-            return filteredContent;
+                            "\\", "'s", "'re", "'d", "\"", "(", ")", "<", ">", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", };
+
+            if (File.Exists(contentPath))
+                File.Delete(contentPath);
+
+            while (!reader.EndOfStream)
+            {
+                string line = reader.ReadLine();
+                string[] parts = line.Split(delimiters, StringSplitOptions.None);
+                string filteredContent = "";
+                for (int i = 0; i < parts.Length; i++)
+                    filteredContent += _porter.StemWord(parts[i].ToLower()) + " ";
+
+                using (FileStream fs = new FileStream(contentPath, FileMode.Append))
+                {
+                    StreamWriter sw = new StreamWriter(fs);
+                    sw.WriteLine(filteredContent);
+                    sw.Flush();
+                }
+            }
+            reader.Dispose();
+            File.Delete(content);
+            return contentPath;
         }
 
         public string GetLastKeysFromXmlFiles(string content)
@@ -103,14 +137,15 @@ namespace TextMining
 
         private void MakeDictionary(string content)
         {
-            string[] delimiters = new string[] { " " };
-            string[] parts = content.Split(delimiters, StringSplitOptions.None);
-
+            string lines = File.ReadAllText(content);
+            string[] delimiters = new string[] { " ", "\r\n" };
+            string[] parts = lines.Split(delimiters, StringSplitOptions.None);
+            
             wordsDictionary.Add(parts[0], 1);
             for (int i = 1; i < parts.Length; i++)
             {
                 int counter = 0;
-                if (parts[i] != "" && parts[i] != "#endfile#") 
+                if (parts[i] != "" && parts[i] != "#endfile#")  
                     foreach (KeyValuePair<string, int> pair in wordsDictionary)
                     {
                         if (pair.Key == parts[i])
@@ -131,9 +166,10 @@ namespace TextMining
 
         private void MakeListOfDictionaries(string content)
         {
-            Dictionary<string, int> dictionary = new Dictionary<string, int>();
+            string lines = File.ReadAllText(content);
             string[] delimiters = new string[] { " " };
-            string[] parts = content.Split(delimiters, StringSplitOptions.None);
+            string[] parts = lines.Split(delimiters, StringSplitOptions.None);
+            Dictionary<string, int> dictionary = new Dictionary<string, int>();
 
             dictionary.Add(parts[0], 1);
             for (int i = 1; i < parts.Length; i++)
@@ -193,8 +229,8 @@ namespace TextMining
 
 
             // Clear checkers + Filtering the list of dictionaries (2)
-            foreach (var dictionary in listOfDictionaries)          
-                foreach (KeyValuePair<string, int> pair in dictionary.ToList())                
+            foreach (var dictionary in listOfDictionaries)
+                foreach (KeyValuePair<string, int> pair in dictionary.ToList())
                     foreach (string str in stopwords)
                         if (pair.Key == str)
                             dictionary.Remove(pair.Key);                             
@@ -209,7 +245,7 @@ namespace TextMining
                 sortedWordsDictionary = wordsDictionary.Keys.ToList();
                 sortedWordsDictionary.Sort();
                 Console.WriteLine("All words extracted and sorted successfully :");
-               foreach(var key in sortedWordsDictionary)
+                foreach (var key in sortedWordsDictionary)
                     Console.WriteLine("{0}: {1}", key, wordsDictionary[key]);
 
                 var temp = new Dictionary<string, int>();
@@ -311,12 +347,31 @@ namespace TextMining
 
         private List<string> GetFirstColumnFromTopicsDictionary()
         {
+
+            //string workingDirectory = Environment.CurrentDirectory;
+            //string contentPath = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\shitclsee.txt";
+            //if (File.Exists(contentPath))
+            //    File.Delete(contentPath);
+
             var topics = new List<string>();
-            foreach (KeyValuePair<int, string> pair in topicsDictionary)
+
+            foreach (KeyValuePair<int, string> pair in topicsDictionary)    
             {
                 string[] classes = pair.Value.Split(' ');
-                if (classes[0] != "") 
-                    topics.Add(classes[0]);
+                for (int i = 0; i < classes.Count(); i++)
+                {
+                    if (classes[0] != "")// && classes[i].Count() >= 2) 
+                    {
+                        //using (FileStream fs = new FileStream(contentPath, FileMode.Append))
+                        //{
+                        //    StreamWriter sw = new StreamWriter(fs);
+                        //    sw.WriteLine(classes[i]);
+                        //    sw.Flush();
+                        //}
+                        topics.Add(classes[0]);
+                        break;
+                    }
+                }
             }
             return topics;
         }
@@ -357,7 +412,7 @@ namespace TextMining
             var indexes = new List<int>();
             foreach (KeyValuePair<int, string> pair in topicsDictionary.ToList())
             {
-                if (string.IsNullOrWhiteSpace(pair.Value))
+                if (string.IsNullOrWhiteSpace(pair.Value)) 
                 {
                     indexes.Add(pair.Key);
                     topicsDictionary.Remove(pair.Key);
@@ -376,8 +431,19 @@ namespace TextMining
                 {
                     value = value.Replace(word, "");
                 }
-                if (value.Length > 0)
-                    temp.Add(pair.Key, value);
+
+                string[] rowTopics = value.Split(' ');
+                int ct = 0;
+                for (int i = 0; i < rowTopics.Count(); i++)
+                {
+                    if (rowTopics[i] != "" && rowTopics[i].Length >= 2)
+                    {
+                        temp.Add(pair.Key, rowTopics[i]); break;
+                    }
+                    else ct++;
+                }
+                if (ct == rowTopics.Count())
+                    temp.Add(pair.Key, "");
             }
             topicsDictionary.Clear();
             topicsDictionary = temp;
@@ -400,17 +466,22 @@ namespace TextMining
         private void AdjustVectorsAndTopicsDictionary()
         {
             var forbiddenIndexes = GetNullStringIndexesFromTopicsDictionary();
-           
+            var temp = new List<List<byte>>();
+
             for (int i = 0; i < VectorXMLs.Count(); i++) 
             {
-                for (int j = 0; j < forbiddenIndexes.Count(); j++) 
-                    if (i == forbiddenIndexes[j])
-                    {
-                        VectorXMLs.RemoveAt(i);
-                        if (j + 1 < forbiddenIndexes.Count() && forbiddenIndexes[j + 1] != 0) 
-                            forbiddenIndexes[j + 1]--;
-                    }
+                if (forbiddenIndexes.Contains(i) == false)
+                    temp.Add(VectorXMLs[i]);
+
+                //for (int j = 0; j < forbiddenIndexes.Count(); j++) 
+                //    if (i == forbiddenIndexes[j]) 
+                //    {
+                //        VectorXMLs.RemoveAt(i);
+                //        if (j + 1 < forbiddenIndexes.Count() && forbiddenIndexes[j + 1] != 0) 
+                //           forbiddenIndexes[j + 1]--;
+                //    }
             }
+            VectorXMLs = temp;
         }
 
         private List<double> ComputeInfoGain(double globalEntropy)
@@ -567,7 +638,7 @@ namespace TextMining
                 if (randomNumbers.IndexOf(random) != -1)
                 {
                     int value = random;
-                    while (value == random && randomNumbers.Contains(random) == true)
+                    while (value == random || randomNumbers.Contains(random) == true)
                         random = rand.Next(0, xmlVectors.Count());
                 }
                 temp30ProcOfVectorXML.Add(xmlVectors[random]);
