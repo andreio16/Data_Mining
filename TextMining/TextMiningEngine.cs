@@ -24,6 +24,43 @@ namespace TextMining
         }
     }
 
+    class confusionMatrix
+    {
+        public int true_pozitive;
+        public int true_negative;
+        public int flase_positive;
+        public int flase_negative;
+
+        public confusionMatrix()
+        {
+            true_pozitive = 0;
+            true_negative = 0;
+            flase_positive = 0;
+            flase_negative = 0;
+        }
+
+        public double computeAccuracy()
+        {
+            return (double)(true_pozitive + true_negative) / (true_pozitive + true_negative + flase_negative + flase_positive);
+        }
+
+        public double computePrecision()
+        {
+            return (double)(true_pozitive) / (true_pozitive + flase_positive);
+        }
+
+        public double computeRecall()
+        {
+            return (double)(true_pozitive) / (true_pozitive + flase_negative);
+        }
+
+        public double computeErrorRate()
+        {
+            return (double)(flase_positive + flase_negative) / (true_pozitive + true_negative + flase_negative + flase_positive);
+        }
+
+    }
+
     class TextMiningEngine
     {
         private Dictionary<string, int> wordsDictionary = new Dictionary<string, int>();
@@ -98,8 +135,8 @@ namespace TextMining
             string workingDirectory = Environment.CurrentDirectory;
             string contentPath = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\temp.txt";
 
-            string[] delimiters = new string[] { " ", ".", ",", ":", ";", "!", "?", "%", "&", "$", "@", "-", "+", "/", "\t", "*", "'",
-                            "\\", "'s", "'re", "'d", "\"", "(", ")", "<", ">", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", };
+            string[] delimiters = new string[] { " ", ".", ",", ":", ";", "!", "?", "%", "&", "$", "@", "-", "+", "/", "\t", "*", "'", "=",
+                           "[","]", "\\", "'s", "'re", "'d", "\"", "(", ")", "<", ">", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", };
 
             if (File.Exists(contentPath))
                 File.Delete(contentPath);
@@ -244,6 +281,7 @@ namespace TextMining
             {
                 sortedWordsDictionary = wordsDictionary.Keys.ToList();
                 sortedWordsDictionary.Sort();
+                Console.WriteLine("[Keep in mind the byte - int cast error rate]");
                 Console.WriteLine("All words extracted and sorted successfully :");
                 foreach (var key in sortedWordsDictionary)
                     Console.WriteLine("{0}: {1}", key, wordsDictionary[key]);
@@ -347,12 +385,6 @@ namespace TextMining
 
         private List<string> GetFirstColumnFromTopicsDictionary()
         {
-
-            //string workingDirectory = Environment.CurrentDirectory;
-            //string contentPath = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "\\shitclsee.txt";
-            //if (File.Exists(contentPath))
-            //    File.Delete(contentPath);
-
             var topics = new List<string>();
 
             foreach (KeyValuePair<int, string> pair in topicsDictionary)    
@@ -360,14 +392,8 @@ namespace TextMining
                 string[] classes = pair.Value.Split(' ');
                 for (int i = 0; i < classes.Count(); i++)
                 {
-                    if (classes[0] != "")// && classes[i].Count() >= 2) 
+                    if (classes[0] != "")
                     {
-                        //using (FileStream fs = new FileStream(contentPath, FileMode.Append))
-                        //{
-                        //    StreamWriter sw = new StreamWriter(fs);
-                        //    sw.WriteLine(classes[i]);
-                        //    sw.Flush();
-                        //}
                         topics.Add(classes[0]);
                         break;
                     }
@@ -472,14 +498,6 @@ namespace TextMining
             {
                 if (forbiddenIndexes.Contains(i) == false)
                     temp.Add(VectorXMLs[i]);
-
-                //for (int j = 0; j < forbiddenIndexes.Count(); j++) 
-                //    if (i == forbiddenIndexes[j]) 
-                //    {
-                //        VectorXMLs.RemoveAt(i);
-                //        if (j + 1 < forbiddenIndexes.Count() && forbiddenIndexes[j + 1] != 0) 
-                //           forbiddenIndexes[j + 1]--;
-                //    }
             }
             VectorXMLs = temp;
         }
@@ -943,10 +961,12 @@ namespace TextMining
                     distance = ComputeEuclideanDistanceSimilarity(testNormalized[i], centroids[j]);
                     distanceList.Add(distance);
                 }
-                var minValue = distanceList.Min(x => x);
+                var minValue = distanceList.Min(x => x); 
                 var index = distanceList.IndexOf(minValue);
                 predictedClasses.Add(centroidsClasses[index]);
             }
+
+            // pentru fiec clasa distincta trebuie calc un conf mat
 
         }
 
