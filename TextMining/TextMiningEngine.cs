@@ -61,6 +61,8 @@ namespace TextMining
 
     }
 
+    enum Distance { Cosine, Manhattan, Euclid }
+
     class TextMiningEngine
     {
         private Dictionary<string, int> wordsDictionary = new Dictionary<string, int>();
@@ -72,7 +74,7 @@ namespace TextMining
         private List<List<byte>> VectorXMLs = new List<List<byte>>();
 
 
-
+        //---------------------------------------------------------------------------------------
         public string GetNodesValuesFromXML(string path, string tag1, string tag2)
         {
             string workingDirectory = Environment.CurrentDirectory;
@@ -281,8 +283,8 @@ namespace TextMining
             {
                 sortedWordsDictionary = wordsDictionary.Keys.ToList();
                 sortedWordsDictionary.Sort();
-                Console.WriteLine("[Keep in mind the byte - int cast error rate]");
-                Console.WriteLine("All words extracted and sorted successfully :");
+                Console.WriteLine("(Keep in mind the byte - int cast error rate)");
+                Console.WriteLine("\n[:::All words extracted and sorted successfully:::]");
                 foreach (var key in sortedWordsDictionary)
                     Console.WriteLine("{0}: {1}", key, wordsDictionary[key]);
 
@@ -349,9 +351,9 @@ namespace TextMining
             }
             else Console.WriteLine("Error while reading XML files; Check if the root path is correct!");
         }
-
-
         
+        //---------------------------------------------------------------------------------------
+
         private Dictionary<string, int> ProcessingTopicsDictionary()
         {
             var firstTopicDictionary = new Dictionary<string, int>();
@@ -674,7 +676,8 @@ namespace TextMining
 
 
             //  Entropy DONE
-            Console.WriteLine("Calculated Entropy for attribute set : {0}", globalEntropy);
+            Console.WriteLine("\n[:::Calculated Entropy for attribute set : {0} :::]", globalEntropy);
+            Console.WriteLine(">> Classes frequency after feature selection :");
             foreach (KeyValuePair<string, int> pair in xmlClasses)
                 Console.WriteLine("{0}:{1} ", pair.Key, pair.Value);
 
@@ -742,7 +745,7 @@ namespace TextMining
                         lineCt++;
                 }
             }
-            Console.WriteLine(">> 70% Training Set exported successfully!");
+            Console.WriteLine("\n>> 70% Training Set exported successfully!");
 
             // Writing the testSET file
             lineCt = 0;
@@ -775,12 +778,11 @@ namespace TextMining
                         lineCt++;
                 }
             }
-            Console.WriteLine(">> 30% Test Set exported successfully!");
+            Console.WriteLine(">> 30% Test Set exported successfully!\n");
         }
-
-
-
         
+        //---------------------------------------------------------------------------------------
+
         private List<List<double>> ApplyNormalization(string arffPath, List<string> outClasses)
         {
             var temp = new List<List<double>>();
@@ -901,6 +903,119 @@ namespace TextMining
             return Math.Sqrt(distance);
         }
 
+        private List<string> ComputeRocchioPredictedClasses(List<List<double>> testNormalized, List<List<double>> centroids, List<string> centroidsClasses, Distance dist)
+        {
+            double distance;
+            var distanceList = new List<double>();
+            var predictedClasses = new List<string>();
+
+            // Compute testing-training distances
+            for (int i = 0; i < testNormalized.Count; i++)
+            {
+                distanceList.Clear();
+                for (int j = 0; j < centroids.Count; j++)
+                {
+                    switch (dist)
+                    {
+                        case Distance.Cosine:
+                            {
+                                distance = ComputeCosineDistanceSimilarity(testNormalized[i], centroids[j]);
+                                distanceList.Add(distance);
+                                break;
+                            }
+                        case Distance.Manhattan:
+                            {
+                                distance = ComputeManhattanDistanceSimilarity(testNormalized[i], centroids[j]);
+                                distanceList.Add(distance);
+                                break;
+                            }
+                        case Distance.Euclid:
+                            {
+                                distance = ComputeEuclideanDistanceSimilarity(testNormalized[i], centroids[j]);
+                                distanceList.Add(distance);
+                                break;
+                            }
+                        default:break;
+                    }
+                }
+                var minValue = distanceList.Min(x => x);
+                var index = distanceList.IndexOf(minValue);
+                predictedClasses.Add(centroidsClasses[index]);
+            }
+            return predictedClasses;
+        }
+
+        private List<confusionMatrix> EvaluateRoochioPrediction(List<string> predictedClasses, List<string> actualClasses)
+        {
+            var confMattrList = new List<confusionMatrix>();
+            var distinctPredictions = predictedClasses.Distinct().ToList();
+
+            for (int i = 0; i < distinctPredictions.Count; i++)
+            {
+                var confMattrForOneClass = new confusionMatrix();
+                for (int j = 0; j < predictedClasses.Count; j++) 
+                {
+                    //...
+                    if (distinctPredictions[i] == predictedClasses[j] && distinctPredictions[i] == actualClasses[j])
+                        confMattrForOneClass.true_pozitive++;
+                    if (distinctPredictions[i] != predictedClasses[j] && distinctPredictions[i] == actualClasses[j])
+                        confMattrForOneClass.flase_negative++;
+                    if (distinctPredictions[i] == predictedClasses[j] && distinctPredictions[i] != actualClasses[j])
+                        confMattrForOneClass.flase_positive++;
+                    if (distinctPredictions[i] != predictedClasses[j] && distinctPredictions[i] != actualClasses[j])
+                        confMattrForOneClass.true_negative++;
+                }
+                confMattrList.Add(confMattrForOneClass);
+            }
+            return confMattrList;
+        }
+
+        private void PrintRoochioPredictionAndActualClasses(List<string> predictedClasses, List<string> actualClasses, Distance dist)
+        {
+            Console.WriteLine("[:::Printing Rocchio Learning Algorithm Predictions:::]");
+            switch (dist)
+            {
+                case Distance.Cosine:
+                    {
+                        Console.WriteLine(">> Cosine Distance is computed for evaluating testing - training sets!");
+                        break;
+                    }
+                case Distance.Manhattan:
+                    {
+                        Console.WriteLine(">> Manhattan Distance is computed for evaluating testing - training sets!");
+                        break;
+                    }
+                case Distance.Euclid:
+                    {
+                        Console.WriteLine(">> Euclidian Distance is computed for evaluating testing - training sets!");
+                        break;
+                    }
+                default:
+                    break;
+            }
+            for (int i = 0; i < predictedClasses.Count; i++)
+                Console.WriteLine(">> Prediction Class:{0}\t Actual Class:{1}", predictedClasses[i], actualClasses[i]);
+        }
+
+        private void PrintRoochioEvaluationMatrixResults(List<confusionMatrix> confusionMatrices)
+        {
+            double accuracy = 0, precision = 0, recall = 0, err_rate = 0;
+            for (int i = 0; i < confusionMatrices.Count; i++)
+            {
+                accuracy += confusionMatrices[i].computeAccuracy();
+                precision += confusionMatrices[i].computePrecision();
+                recall += confusionMatrices[i].computeRecall();
+                err_rate += confusionMatrices[i].computeErrorRate();
+            }
+
+            accuracy = accuracy / confusionMatrices.Count();
+            precision = precision / confusionMatrices.Count();
+            recall = recall / confusionMatrices.Count();
+            err_rate = err_rate / confusionMatrices.Count();
+
+            Console.WriteLine(">> Evaluation Results :\n   [Accuracy:{0}]\n   [Precision:{1}]\n   [Recall:{2}]\n   [ErrorRate:{3}]\n", accuracy, precision, recall, err_rate);
+        }
+
         public void ApplyLearningAlgRocchio_Step3()
         {
             string workingDirectory = Environment.CurrentDirectory;
@@ -945,33 +1060,53 @@ namespace TextMining
             }
             trainingNormalized.Clear();
 
+            // --- ROOCHIO WITH MANHATTAN DISTANCE --- //
+                // Get Rocchio Predicted Classes
+                var predictedClasses = ComputeRocchioPredictedClasses(testNormalized, centroids, centroidsClasses, Distance.Manhattan);
+                //
+                // Print Rocchio Results
+                PrintRoochioPredictionAndActualClasses(predictedClasses, testClasses, Distance.Manhattan);
+                //
+                // For each predicted class we need to compute it's own confusion matrix
+                var evalMatrixList = EvaluateRoochioPrediction(predictedClasses, testClasses);
+                //
+                // Print Evaluation Final Result
+                PrintRoochioEvaluationMatrixResults(evalMatrixList);
+            // ---------------------------------------- //
+            
 
-            double distance;
-            var distanceList = new List<double>();
-            var predictedClasses = new List<string>();
-        
-            // Compute testing-training distances
-            for (int i = 0; i < testNormalized.Count; i++)
-            {
-                distanceList.Clear();
-                for (int j = 0; j < centroids.Count; j++)
-                {
-                    //distance = ComputeCosineDistanceSimilarity(testNormalized[i], centroids[j]);
-                    //distance = ComputeManhattanDistanceSimilarity(testNormalized[i], centroids[j]);
-                    distance = ComputeEuclideanDistanceSimilarity(testNormalized[i], centroids[j]);
-                    distanceList.Add(distance);
-                }
-                var minValue = distanceList.Min(x => x); 
-                var index = distanceList.IndexOf(minValue);
-                predictedClasses.Add(centroidsClasses[index]);
-            }
+            // --- ROOCHIO WITH EUCLIDIAN DISTANCE --- //
+                // Get Rocchio Predicted Classes
+                predictedClasses = ComputeRocchioPredictedClasses(testNormalized, centroids, centroidsClasses, Distance.Euclid);
+                //
+                // Print Rocchio Results
+                PrintRoochioPredictionAndActualClasses(predictedClasses, testClasses, Distance.Euclid);
+                //
+                // For each predicted class we need to compute it's own confusion matrix
+                evalMatrixList = EvaluateRoochioPrediction(predictedClasses, testClasses);
+                //
+                // Print Evaluation Final Result
+                PrintRoochioEvaluationMatrixResults(evalMatrixList);
+                // ---------------------------------------- //
+            
 
-            // pentru fiec clasa distincta trebuie calc un conf mat
-
+            // --- ROOCHIO WITH COSINE DISTANCE --- //
+                // Get Rocchio Predicted Classes
+                predictedClasses = ComputeRocchioPredictedClasses(testNormalized, centroids, centroidsClasses, Distance.Cosine);
+                //
+                // Print Rocchio Results
+                PrintRoochioPredictionAndActualClasses(predictedClasses, testClasses, Distance.Cosine);
+                //
+                // For each predicted class we need to compute it's own confusion matrix
+                evalMatrixList = EvaluateRoochioPrediction(predictedClasses, testClasses);
+                //
+                // Print Evaluation Final Result
+                PrintRoochioEvaluationMatrixResults(evalMatrixList);
+                // ---------------------------------------- //
         }
 
 
-
+        //---------------------------------------------------------------------------------------
         // ~~~ All Print Functions !!! ~~~  //
 
         public void PrintWordsDictionary()
@@ -1019,5 +1154,7 @@ namespace TextMining
                 Console.WriteLine();
             }
         }
+
+        //---------------------------------------------------------------------------------------
     }
 }
