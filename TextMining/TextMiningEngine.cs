@@ -955,7 +955,6 @@ namespace TextMining
                 var confMattrForOneClass = new confusionMatrix();
                 for (int j = 0; j < predictedClasses.Count; j++) 
                 {
-                    //...
                     if (distinctPredictions[i] == predictedClasses[j] && distinctPredictions[i] == actualClasses[j])
                         confMattrForOneClass.true_pozitive++;
                     if (distinctPredictions[i] != predictedClasses[j] && distinctPredictions[i] == actualClasses[j])
@@ -1017,9 +1016,8 @@ namespace TextMining
 
             accuracy = accuracy / confusionMatrices.Count();
             precision = precision / confusionMatrices.Count();
-            err_rate = err_rate / confusionMatrices.Count();
-
             recall = recall / confusionMatrices.Count();
+            err_rate = err_rate / confusionMatrices.Count();
 
             Console.WriteLine(">> Evaluation Results :\n   [Accuracy:{0}]\n   [Precision:{1}]\n   [Recall:{2}]\n   [ErrorRate:{3}]\n", accuracy, precision, recall, err_rate);
         }
