@@ -999,19 +999,27 @@ namespace TextMining
 
         private void PrintRoochioEvaluationMatrixResults(List<confusionMatrix> confusionMatrices)
         {
-            double accuracy = 0, precision = 0, recall = 0, err_rate = 0;
+            double accuracy = 0, precision = 0, recall = 0, err_rate = 0, temp = 0;
             for (int i = 0; i < confusionMatrices.Count; i++)
             {
                 accuracy += confusionMatrices[i].computeAccuracy();
-                precision += confusionMatrices[i].computePrecision();
-                recall += confusionMatrices[i].computeRecall();
                 err_rate += confusionMatrices[i].computeErrorRate();
+
+                temp = confusionMatrices[i].computeRecall();
+                if (Double.IsNaN(temp)) temp = 0;
+                recall += temp;
+
+                temp = confusionMatrices[i].computePrecision();
+                if (Double.IsNaN(temp)) temp = 0;
+                precision += temp;
+               
             }
 
             accuracy = accuracy / confusionMatrices.Count();
             precision = precision / confusionMatrices.Count();
-            recall = recall / confusionMatrices.Count();
             err_rate = err_rate / confusionMatrices.Count();
+
+            recall = recall / confusionMatrices.Count();
 
             Console.WriteLine(">> Evaluation Results :\n   [Accuracy:{0}]\n   [Precision:{1}]\n   [Recall:{2}]\n   [ErrorRate:{3}]\n", accuracy, precision, recall, err_rate);
         }
